@@ -87,5 +87,31 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleExpiredDrug(ExpiredDrugException ex, HttpServletRequest req) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
     }
-    
+    @ExceptionHandler(InvalidPrescriptionStatusException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPrescriptionStatus(InvalidPrescriptionStatusException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
+
+    @ExceptionHandler(AllergyConflictException.class)
+    public ResponseEntity<ErrorResponse> handleAllergyConflict(AllergyConflictException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
+
+    @ExceptionHandler(DrugInteractionException.class)
+    public ResponseEntity<ErrorResponse> handleDrugInteraction(DrugInteractionException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
+
+    @ExceptionHandler(ControlledSubstanceAuthException.class)
+    public ResponseEntity<ErrorResponse> handleControlledSubstanceAuth(ControlledSubstanceAuthException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
+    @ExceptionHandler(DualAuthorizationRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleDualAuthRequired(DualAuthorizationRequiredException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
+    @ExceptionHandler(InvalidPurchaseOrderStatusException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPoStatus(InvalidPurchaseOrderStatusException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
+    }
 }

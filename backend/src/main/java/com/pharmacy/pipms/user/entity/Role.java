@@ -24,12 +24,7 @@ public class Role extends BaseEntity {
 
     @Column(length = 255)
     private String description;
-
-    // EAGER is deliberate here too (same reasoning as User.roles in Module 2):
-    // spring.jpa.open-in-view=false means the Hibernate session closes right
-    // after the repository call returns. JwtAuthFilter reads permissions
-    // *after* that point on every request, so LAZY would throw
-    // LazyInitializationException constantly.
+    
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",

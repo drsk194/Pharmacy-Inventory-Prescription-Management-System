@@ -10,6 +10,8 @@ import com.pharmacy.pipms.patient.entity.PatientMedication;
 import com.pharmacy.pipms.patient.repository.PatientAllergyRepository;
 import com.pharmacy.pipms.patient.repository.PatientMedicationRepository;
 import com.pharmacy.pipms.patient.repository.PatientRepository;
+import com.pharmacy.pipms.patient.dto.PatientConditionRequest;
+import com.pharmacy.pipms.patient.dto.PatientConditionResponse;
 import com.pharmacy.pipms.user.entity.User;
 import com.pharmacy.pipms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,11 +54,6 @@ public class PatientService {
         return toResponse(saveWithMrn(patient));
     }
 
-    /**
-     * Called from AuthService.register() when a new user registers with
-     * ROLE_PATIENT, so every patient account gets a linked master record
-     * automatically — staff/patient correct the placeholder DOB afterward.
-     */
     @Transactional
     public Patient createStubPatientForUser(User user) {
         Patient patient = new Patient();
@@ -234,5 +231,33 @@ public class PatientService {
     private PatientMedicationResponse toMedicationResponse(PatientMedication m) {
         return new PatientMedicationResponse(m.getId(), m.getDrugName(), m.getDosage(), m.getFrequency(),
                 m.getStartDate(), m.getEndDate(), m.getPrescribingDoctor(), m.getNotes(), m.isActive());
+    }
+    // Add these fields at the top alongside the existing ones:
+    private final com.pharmacy.pipms.patient.repository.PatientConditionRepository conditionRepository;
+
+    @Transactional
+    public PatientConditionResponse addCondition(Long patientId, PatientConditionRequest request) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new PatientNotFoundException("Patient not found: " + patientId));
+
+        com.pharmacy.pipms.patient.entity.PatientCondition condition = new com.pharmacy.pipms.patient.entity.PatientCondition();
+        condition.setPatient(patient);
+        condition.setConditionName(request.getConditionName());
+        condition.setDiagnosedDate(request.getDiagnosedDate());
+        condition.setNotes(request.getNotes());
+        condition.setActive(true);
+
+        com.pharmacy.pipms.patient.entity.PatientCondition saved = conditionRepository.save(condition);
+        return new PatientConditionResponse(saved.getId(), saved.getConditionName(), saved.getDiagnosedDate(),
+                saved.getNotes(), saved.isActive());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PatientConditionResponse> getConditions(Long patientId) {
+        requirePatientExists(patientId);
+        return conditionRepository.findByPatientIdAndActiveTrue(patientId).stream()
+                .map(c -> new PatientConditionResponse(c.getId(), c.getConditionName(), c.getDiagnosedDate(),
+                        c.getNotes(), c.isActive()))
+                .collect(Collectors.toList());
     }
 }

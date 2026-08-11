@@ -14,8 +14,6 @@ import lombok.Setter;
 @Setter
 public class DoctorProfile extends BaseEntity {
 
-    // Mandatory and unique — every doctor profile belongs to exactly one
-    // staff User account (unlike Patient.user, which is optional).
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -23,7 +21,6 @@ public class DoctorProfile extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String licenseNumber;
 
-    // Not explicitly in the SRS — a reasonable addition for credential context.
     @Column(length = 150)
     private String registrationCouncil;
 
@@ -33,14 +30,9 @@ public class DoctorProfile extends BaseEntity {
     @Column(length = 150)
     private String qualification;
 
-    // FR1's "verification against regulatory database" — mocked as a manual
-    // admin action (PATCH .../verify) rather than a live external API call.
     @Column(nullable = false)
     private boolean verified = false;
 
-    // Simplified prescribing-authority model — one flag covering all
-    // controlled substances, rather than per-schedule granularity the SRS
-    // doesn't specify a schema for.
     @Column(nullable = false)
     private boolean controlledSubstanceAuthorized = false;
 
@@ -49,4 +41,5 @@ public class DoctorProfile extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+    private java.time.LocalDate licenseExpiryDate;
 }

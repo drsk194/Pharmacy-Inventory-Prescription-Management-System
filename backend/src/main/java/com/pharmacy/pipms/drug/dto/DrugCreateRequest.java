@@ -47,4 +47,6 @@ public class DrugCreateRequest {
 
     @Size(max = 100)
     private String barcode;
+    private Integer maxPrescriptionQtyPerFill;
+    private Integer maxRefillsAllowed;
 }

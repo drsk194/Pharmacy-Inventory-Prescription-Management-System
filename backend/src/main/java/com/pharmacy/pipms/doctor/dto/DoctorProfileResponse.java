@@ -17,4 +17,5 @@ public class DoctorProfileResponse {
     private boolean verified;
     private boolean controlledSubstanceAuthorized;
     private boolean active;
+    private java.time.LocalDate licenseExpiryDate;
 }

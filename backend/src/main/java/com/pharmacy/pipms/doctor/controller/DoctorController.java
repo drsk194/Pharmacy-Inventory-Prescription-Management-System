@@ -27,9 +27,6 @@ public class DoctorController {
     public ApiResponse<DoctorProfileResponse> createProfile(@Valid @RequestBody DoctorCreateRequest request) {
         return ApiResponse.success("Doctor profile created", doctorProfileService.createProfile(request));
     }
-
-    // page/size as plain params (not Pageable) — avoids the Swagger
-    // sort=["string"] placeholder bug we hit in Module 4.
     @GetMapping
     @PreAuthorize("hasAuthority('DOCTOR_READ_ALL') or hasAuthority('DOCTOR_MANAGE')")
     public ApiResponse<PageResponse<DoctorProfileResponse>> searchProfiles(
@@ -89,6 +86,12 @@ public class DoctorController {
             @PathVariable Long id, @Valid @RequestBody ControlledSubstanceAuthorizationRequest request) {
         return ApiResponse.success("Controlled-substance prescribing authority updated",
                 doctorProfileService.setControlledSubstanceAuthorization(id, request));
+    }
+    @PatchMapping("/{id}/license-expiry")
+    @PreAuthorize("hasAuthority('DOCTOR_MANAGE')")
+    public ApiResponse<DoctorProfileResponse> setLicenseExpiry(@PathVariable Long id, @RequestParam String expiryDate) {
+        return ApiResponse.success("License expiry date updated",
+                doctorProfileService.setLicenseExpiry(id, java.time.LocalDate.parse(expiryDate)));
     }
 
     private boolean hasAnyAuthority(Authentication authentication, String... authorities) {

@@ -22,8 +22,6 @@ public class Drug extends BaseEntity {
     @Column(length = 200)
     private String brandName;
 
-    // Nullable + unique: MySQL allows multiple NULLs in a unique column,
-    // so drugs without an NDC code yet don't collide with each other.
     @Column(unique = true, length = 50)
     private String ndcCode;
 
@@ -31,7 +29,7 @@ public class Drug extends BaseEntity {
     private String drugClass;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.VARCHAR) // forces VARCHAR — see Module 2's Hibernate 7 enum note
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 20)
     private DrugSchedule schedule;
 
@@ -58,4 +56,10 @@ public class Drug extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+    // Nullable — enforced only when set. See Module 12's Assumption 4:
+    // no global regulatory number is specified in the SRS, so this is a
+    // per-drug configurable limit until Module 19's system config exists.
+    private Integer maxPrescriptionQtyPerFill;
+
+    private Integer maxRefillsAllowed;
 }

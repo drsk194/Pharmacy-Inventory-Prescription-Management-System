@@ -72,4 +72,7 @@ public class User extends BaseEntity {
     // Module 12 will use this heavily; flag lives on the user from day one
     @Column(nullable = false)
     private boolean controlledSubstanceAuthorized = false;
+    // Hashed with the same BCryptPasswordEncoder as the login password —
+    // set via PUT /api/auth/controlled-substance-pin. Null until set.
+    private String controlledSubstancePinHash;
 }

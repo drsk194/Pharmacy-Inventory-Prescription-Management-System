@@ -28,7 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;        
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.pharmacy.pipms.notification.service.NotificationService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -43,6 +43,7 @@ public class BatchService {
     private final DrugBatchRepository batchRepository;
     private final DrugRepository drugRepository;
     private final SupplierRepository supplierRepository;
+    private final NotificationService notificationService;
     private final InventoryLocationService locationService;
     private final InventoryBalanceService balanceService;
     private final StockMovementService stockMovementService;
@@ -60,28 +61,52 @@ public class BatchService {
             throw new DuplicateResourceException(
                     "Batch number already exists for this drug: " + request.getBatchNumber());
         }
-
         enforceShelfLifeRule(request.getExpiryDate(), request.getShortShelfLifeOverrideReason(), authentication);
 
+        return persistBatch(drug, request.getBatchNumber(), request.getManufacturingDate(), request.getExpiryDate(),
+                supplier, request.getQuantityReceived(), request.getPurchasePrice(), request.getMrp(),
+                location, null, authentication);
+    }
+    @Transactional
+    public BatchResponse createBatchFromGrn(Drug drug, String batchNumber, java.time.LocalDate manufacturingDate,
+                                             java.time.LocalDate expiryDate, Supplier supplier,
+                                             java.math.BigDecimal quantityReceived, java.math.BigDecimal purchasePrice,
+                                             java.math.BigDecimal mrp, InventoryLocation location, Long grnId,
+                                             String shortShelfLifeOverrideReason, Authentication authentication) {
+        if (batchRepository.existsByDrugIdAndBatchNumber(drug.getId(), batchNumber)) {
+            throw new DuplicateResourceException("Batch number already exists for this drug: " + batchNumber);
+        }
+        enforceShelfLifeRule(expiryDate, shortShelfLifeOverrideReason, authentication);
+
+        return persistBatch(drug, batchNumber, manufacturingDate, expiryDate, supplier,
+                quantityReceived, purchasePrice, mrp, location, grnId, authentication);
+    }
+
+    private BatchResponse persistBatch(Drug drug, String batchNumber, java.time.LocalDate manufacturingDate,
+                                        java.time.LocalDate expiryDate, Supplier supplier,
+                                        java.math.BigDecimal quantityReceived, java.math.BigDecimal purchasePrice,
+                                        java.math.BigDecimal mrp, InventoryLocation location, Long grnId,
+                                        Authentication authentication) {
         DrugBatch batch = new DrugBatch();
         batch.setDrug(drug);
-        batch.setBatchNumber(request.getBatchNumber());
-        batch.setManufacturingDate(request.getManufacturingDate());
-        batch.setExpiryDate(request.getExpiryDate());
+        batch.setBatchNumber(batchNumber);
+        batch.setManufacturingDate(manufacturingDate);
+        batch.setExpiryDate(expiryDate);
         batch.setSupplier(supplier);
-        batch.setQuantityReceived(request.getQuantityReceived());
-        batch.setCurrentQuantity(request.getQuantityReceived());
-        batch.setPurchasePrice(request.getPurchasePrice());
-        batch.setMrp(request.getMrp());
+        batch.setQuantityReceived(quantityReceived);
+        batch.setCurrentQuantity(quantityReceived);
+        batch.setPurchasePrice(purchasePrice);
+        batch.setMrp(mrp);
         batch.setLocation(location);
+        batch.setGrnId(grnId);
         batch.setStatus(BatchStatus.ACTIVE);
 
         DrugBatch saved = batchRepository.save(batch);
 
         User performedBy = currentUser(authentication);
-        stockMovementService.record(saved, MovementType.RECEIPT, request.getQuantityReceived(),
+        stockMovementService.record(saved, MovementType.RECEIPT, quantityReceived,
                 "BATCH_CREATION", saved.getId(), "Initial stock entry", performedBy);
-        balanceService.adjust(drug, location, request.getQuantityReceived());
+        balanceService.adjust(drug, location, quantityReceived);
 
         return toResponse(saved);
     }
@@ -171,6 +196,15 @@ public class BatchService {
             batchRepository.save(batch);
             stockMovementService.record(batch, MovementType.QUARANTINE, BigDecimal.ZERO,
                     "AUTO_EXPIRY_QUARANTINE", null, "Automatically quarantined: past expiry date", null);
+
+            notificationService.notifyRoles(
+                    java.util.Set.of(com.pharmacy.pipms.common.constants.RoleName.ROLE_PHARMACIST,
+                            com.pharmacy.pipms.common.constants.RoleName.ROLE_ADMIN),
+                    com.pharmacy.pipms.notification.entity.NotificationType.EXPIRED_STOCK,
+                    com.pharmacy.pipms.notification.entity.NotificationPriority.CRITICAL,
+                    "Batch " + batch.getBatchNumber() + " of '" + batch.getDrug().getGenericName()
+                            + "' has expired and was automatically quarantined",
+                    "DrugBatch", batch.getId());
             count++;
         }
 
@@ -179,6 +213,14 @@ public class BatchService {
             if (batch.getStatus() == BatchStatus.ACTIVE) {
                 batch.setStatus(BatchStatus.NEAR_EXPIRY);
                 batchRepository.save(batch);
+
+                notificationService.notifyRoles(
+                        java.util.Set.of(com.pharmacy.pipms.common.constants.RoleName.ROLE_PHARMACIST),
+                        com.pharmacy.pipms.notification.entity.NotificationType.NEAR_EXPIRY,
+                        com.pharmacy.pipms.notification.entity.NotificationPriority.MEDIUM,
+                        "Batch " + batch.getBatchNumber() + " of '" + batch.getDrug().getGenericName()
+                                + "' expires on " + batch.getExpiryDate(),
+                        "DrugBatch", batch.getId());
                 count++;
             }
         }
@@ -227,4 +269,5 @@ public class BatchService {
     public void applyAdjustment(Long batchId, BigDecimal delta) {
         applyQuantityChange(getEntityById(batchId), delta);
     }
+    
 }

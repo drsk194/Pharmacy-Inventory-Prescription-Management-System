@@ -46,4 +46,12 @@ public interface DrugBatchRepository extends JpaRepository<DrugBatch, Long> {
     List<DrugBatch> findNewlyExpired(@Param("today") LocalDate today);
 
     Page<DrugBatch> findByStatusOrderByExpiryDateAsc(BatchStatus status, Pageable pageable);
+
+    @Query("SELECT b.batchNumber, b.mrp, b.manufacturingDate, b.expiryDate, b.currentQuantity FROM DrugBatch b WHERE b.drug.id = :drugId ORDER BY b.expiryDate ASC")
+    List<Object[]> getPriceComparisonForDrug(@Param("drugId") Long drugId);
+    @Query("SELECT COALESCE(SUM(b.currentQuantity * b.mrp), 0) FROM DrugBatch b WHERE b.status IN ('ACTIVE','NEAR_EXPIRY')")
+    java.math.BigDecimal sumTotalStockValue();
+
+    long countByStatus(BatchStatus status);
+    
 }

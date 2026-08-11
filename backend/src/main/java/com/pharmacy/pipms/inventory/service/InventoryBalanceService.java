@@ -10,8 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
-// Keeps the InventoryBalance read-cache in sync. See InventoryBalance.java
-// for why this is a cache, not the source of truth for low-stock logic.
 @Service
 @RequiredArgsConstructor
 public class InventoryBalanceService {

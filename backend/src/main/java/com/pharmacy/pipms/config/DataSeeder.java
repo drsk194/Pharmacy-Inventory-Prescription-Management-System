@@ -6,6 +6,7 @@ import com.pharmacy.pipms.user.entity.Permission;
 import com.pharmacy.pipms.user.entity.Role;
 import com.pharmacy.pipms.user.repository.PermissionRepository;
 import com.pharmacy.pipms.user.repository.RoleRepository;
+import com.pharmacy.pipms.systemconfig.repository.SystemConfigurationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final SystemConfigurationRepository systemConfigurationRepository;
 
     @Override
     @Transactional
@@ -31,6 +33,7 @@ public class DataSeeder implements CommandLineRunner {
         Map<RoleName, Role> roleMap = seedRoles();
         assignPermissionsToRoles(roleMap, permissionMap);
         roleRepository.saveAll(roleMap.values());
+        seedDefaultSystemConfig();
     }
 
     private Map<PermissionName, Permission> seedPermissions() {
@@ -83,9 +86,10 @@ public class DataSeeder implements CommandLineRunner {
                 REPORT_INVENTORY, REPORT_DISPENSING,
                 PATIENT_READ_ALL, PATIENT_MANAGE,
                 DOCTOR_READ_ALL,
-                INVENTORY_COUNT, INVENTORY_ADJUST);
+                INVENTORY_COUNT, INVENTORY_ADJUST,
+                BILLING_CREATE, BILLING_READ_ALL, PAYMENT_PROCESS, REFUND_PROCESS);
 
-        // TECHNICIAN: add PATIENT_READ_ALL, PATIENT_MANAGE
+        // PROCUREMENT_OFFICER: suppliers, POs, GRN — no dispensing/prescription access
         assign(roles.get(RoleName.ROLE_PROCUREMENT_OFFICER), perms,
                 DRUG_READ, BATCH_READ, BATCH_CREATE,
                 SUPPLIER_READ, SUPPLIER_MANAGE,
@@ -93,12 +97,15 @@ public class DataSeeder implements CommandLineRunner {
                 REPORT_PROCUREMENT,
                 INVENTORY_COUNT, INVENTORY_ADJUST);
 
-        // PROCUREMENT_OFFICER: suppliers, POs, GRN — no dispensing/prescription access
-        assign(roles.get(RoleName.ROLE_PROCUREMENT_OFFICER), perms,
+        // TECHNICIAN: add PATIENT_READ_ALL, PATIENT_MANAGE
+        assign(roles.get(RoleName.ROLE_TECHNICIAN), perms,
                 DRUG_READ, BATCH_READ,
-                SUPPLIER_READ, SUPPLIER_MANAGE,
-                PURCHASE_ORDER_CREATE, GRN_CREATE,
-                REPORT_PROCUREMENT);
+                PRESCRIPTION_PROCESS, DISPENSING_PREPARE,
+                INVENTORY_COUNT, INVENTORY_ADJUST,
+                BILLING_CREATE, BILLING_READ_ALL, PAYMENT_PROCESS,
+                CONTROLLED_SUBSTANCE_COSIGN,
+                REPORT_DISPENSING,
+                PATIENT_READ_ALL, PATIENT_MANAGE);
 
         // AUDITOR: read-only across the board
         assign(roles.get(RoleName.ROLE_AUDITOR), perms,
@@ -124,6 +131,31 @@ public class DataSeeder implements CommandLineRunner {
     private void assign(Role role, Map<PermissionName, Permission> permissionMap, PermissionName... names) {
         for (PermissionName name : names) {
             role.getPermissions().add(permissionMap.get(name));
+        }
+        
+    }
+    private void seedDefaultSystemConfig() {
+        seedConfigIfAbsent("DISPENSING_TERMINAL_IDLE_TIMEOUT_MINUTES", "10",
+                com.pharmacy.pipms.systemconfig.entity.ConfigDataType.NUMBER, "SECURITY",
+                "FR2 requirement — documented value only; not actively enforced due to stateless JWT architecture (see Module 19 notes)");
+        seedConfigIfAbsent("PHYSICAL_STOCK_COUNT_FREQUENCY_DAYS", "30",
+                com.pharmacy.pipms.systemconfig.entity.ConfigDataType.NUMBER, "INVENTORY",
+                "Appendix F: physical stock count must be performed monthly");
+        seedConfigIfAbsent("EMERGENCY_ACCESS_ENABLED", "false",
+                com.pharmacy.pipms.systemconfig.entity.ConfigDataType.BOOLEAN, "SECURITY",
+                "Toggle for FR2's emergency access procedure documentation flag");
+    }
+
+    private void seedConfigIfAbsent(String key, String value, com.pharmacy.pipms.systemconfig.entity.ConfigDataType type,
+                                     String category, String description) {
+        if (systemConfigurationRepository.findByConfigKey(key).isEmpty()) {
+            com.pharmacy.pipms.systemconfig.entity.SystemConfiguration config = new com.pharmacy.pipms.systemconfig.entity.SystemConfiguration();
+            config.setConfigKey(key);
+            config.setConfigValue(value);
+            config.setDataType(type);
+            config.setCategory(category);
+            config.setDescription(description);
+            systemConfigurationRepository.save(config);
         }
     }
 }

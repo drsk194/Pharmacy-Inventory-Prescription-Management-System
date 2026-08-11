@@ -113,4 +113,19 @@ public class PatientController {
         }
         return false;
     }
+    @PostMapping("/{id}/conditions")
+    @PreAuthorize("hasAuthority('PATIENT_MANAGE')")
+    public ApiResponse<com.pharmacy.pipms.patient.dto.PatientConditionResponse> addCondition(
+            @PathVariable Long id, @Valid @RequestBody com.pharmacy.pipms.patient.dto.PatientConditionRequest request) {
+        return ApiResponse.success("Medical condition recorded", patientService.addCondition(id, request));
+    }
+
+    @GetMapping("/{id}/conditions")
+    @PreAuthorize("hasAuthority('PATIENT_READ_ALL') or hasAuthority('PATIENT_READ_OWN')")
+    public ApiResponse<List<com.pharmacy.pipms.patient.dto.PatientConditionResponse>> getConditions(
+            @PathVariable Long id, Authentication authentication) {
+        boolean hasFullAccess = hasAuthority(authentication, "PATIENT_READ_ALL");
+        patientService.getPatientById(id, authentication.getName(), hasFullAccess);
+        return ApiResponse.success(patientService.getConditions(id));
+    }
 }

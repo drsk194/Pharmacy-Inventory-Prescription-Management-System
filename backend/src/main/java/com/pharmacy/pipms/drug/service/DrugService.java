@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DrugService {
 
     private final DrugRepository drugRepository;
+    private final com.pharmacy.pipms.audit.service.AuditLogService auditLogService;
+    private final com.pharmacy.pipms.user.repository.UserRepository userRepository;
 
     @Transactional
     public DrugResponse createDrug(DrugCreateRequest request) {
@@ -34,9 +36,11 @@ public class DrugService {
         applyFields(drug, request.getGenericName(), request.getBrandName(), request.getNdcCode(),
                 request.getDrugClass(), request.getSchedule(), request.getStorageCondition(),
                 request.getUnitOfMeasure(), request.getReorderLevel(), request.getMinStockLevel(),
-                request.getMaxStockLevel(), request.getBarcode());
+                request.getMaxStockLevel(), request.getBarcode(),
+            request.getMaxPrescriptionQtyPerFill(), request.getMaxRefillsAllowed());
         drug.setActive(true);
-
+        auditLogService.log(currentActor(), "DRUG_CREATED", "Drug", drug.getId(),
+                null, drug.getGenericName(), "SUCCESS", null);
         return toResponse(drugRepository.save(drug));
     }
 
@@ -59,11 +63,12 @@ public class DrugService {
         applyFields(drug, request.getGenericName(), request.getBrandName(), request.getNdcCode(),
                 request.getDrugClass(), request.getSchedule(), request.getStorageCondition(),
                 request.getUnitOfMeasure(), request.getReorderLevel(), request.getMinStockLevel(),
-                request.getMaxStockLevel(), request.getBarcode());
-
+                request.getMaxStockLevel(), request.getBarcode(),request.getMaxPrescriptionQtyPerFill(), request.getMaxRefillsAllowed());
+        auditLogService.log(currentActor(), "DRUG_UPDATED", "Drug", drug.getId(),
+                null, drug.getGenericName(), "SUCCESS", null);
         return toResponse(drugRepository.save(drug));
     }
-
+    
     @Transactional(readOnly = true)
     public DrugResponse getDrugById(Long id) {
         return toResponse(drugRepository.findById(id)
@@ -88,6 +93,8 @@ public class DrugService {
         Drug drug = drugRepository.findById(id)
                 .orElseThrow(() -> new DrugNotFoundException("Drug not found: " + id));
         drug.setActive(active);
+        auditLogService.log(currentActor(), "DRUG_STATUS_CHANGED", "Drug", drug.getId(),
+                null, "active=" + active, "SUCCESS", null);
         return toResponse(drugRepository.save(drug));
     }
 
@@ -106,7 +113,8 @@ public class DrugService {
                               com.pharmacy.pipms.drug.entity.DrugSchedule schedule,
                               com.pharmacy.pipms.drug.entity.StorageCondition storageCondition,
                               String unitOfMeasure, Integer reorderLevel, Integer minStockLevel,
-                              Integer maxStockLevel, String barcode) {
+                              Integer maxStockLevel, String barcode,
+                              Integer maxPrescriptionQtyPerFill, Integer maxRefillsAllowed) {
         drug.setGenericName(genericName);
         drug.setBrandName(brandName);
         drug.setNdcCode(ndcCode);
@@ -118,13 +126,16 @@ public class DrugService {
         drug.setMinStockLevel(minStockLevel);
         drug.setMaxStockLevel(maxStockLevel);
         drug.setBarcode(barcode);
+        drug.setMaxPrescriptionQtyPerFill(maxPrescriptionQtyPerFill);
+        drug.setMaxRefillsAllowed(maxRefillsAllowed);
     }
 
     private DrugResponse toResponse(Drug d) {
         return new DrugResponse(
                 d.getId(), d.getGenericName(), d.getBrandName(), d.getNdcCode(), d.getDrugClass(),
                 d.getSchedule().name(), d.getStorageCondition().name(), d.getUnitOfMeasure(),
-                d.getReorderLevel(), d.getMinStockLevel(), d.getMaxStockLevel(), d.getBarcode(), d.isActive()
+                d.getReorderLevel(), d.getMinStockLevel(), d.getMaxStockLevel(), d.getBarcode(), d.isActive(),
+                d.getMaxPrescriptionQtyPerFill(), d.getMaxRefillsAllowed()
         );
     }
 
@@ -133,5 +144,9 @@ public class DrugService {
                 d.getId(), d.getGenericName(), d.getBrandName(), d.getDrugClass(),
                 d.getSchedule().name(), d.getStorageCondition().name(), d.getUnitOfMeasure()
         );
+    }
+    private com.pharmacy.pipms.user.entity.User currentActor() {
+        String email = com.pharmacy.pipms.audit.util.CurrentActorUtil.getCurrentUserEmail();
+        return email != null ? userRepository.findByEmail(email).orElse(null) : null;
     }
 }

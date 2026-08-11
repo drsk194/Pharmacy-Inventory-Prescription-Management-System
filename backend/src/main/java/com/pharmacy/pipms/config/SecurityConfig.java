@@ -1,5 +1,6 @@
 package com.pharmacy.pipms.config;
 
+import com.pharmacy.pipms.audit.filter.AuditRequestContextFilter;
 import com.pharmacy.pipms.security.handler.CustomAccessDeniedHandler;
 import com.pharmacy.pipms.security.handler.CustomAuthEntryPoint;
 import com.pharmacy.pipms.security.jwt.JwtAuthFilter;
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final CustomAuthEntryPoint authEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final UserDetailsService userDetailsService;
+    private final AuditRequestContextFilter requestContextFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -60,6 +62,7 @@ public class SecurityConfig {
                         // Everything else requires authentication; specific role/permission
                         // rules are added per-endpoint via @PreAuthorize starting Module 6+
                         .anyRequest().authenticated())
+                .addFilterBefore(requestContextFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

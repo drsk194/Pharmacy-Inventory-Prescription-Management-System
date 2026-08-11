@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Registration, login, tokens, password management")
+
 public class AuthController {
 
     private final AuthService authService;
@@ -69,5 +70,11 @@ public class AuthController {
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ApiResponse.success("Password reset successfully", null);
+    }
+    @PutMapping("/controlled-substance-pin")
+    public ApiResponse<Void> setControlledSubstancePin(Authentication authentication,
+                                                         @Valid @RequestBody SetControlledSubstancePinRequest request) {
+        authService.setControlledSubstancePin(authentication.getName(), request);
+        return ApiResponse.success("Controlled-substance PIN set successfully", null);
     }
 }

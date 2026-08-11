@@ -42,7 +42,6 @@ public class DrugController {
         return ApiResponse.success(drugService.searchDrugs(search, drugClass, schedule, activeOnly, pageable));
     }
 
-    // Public / guest endpoint — already permitAll() in SecurityConfig since Module 2.
     @GetMapping("/catalog")
     public ApiResponse<PageResponse<DrugCatalogResponse>> publicCatalog(
             @RequestParam(defaultValue = "0") int page,

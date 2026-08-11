@@ -40,9 +40,6 @@ public class BatchController {
     public ApiResponse<BatchResponse> getById(@PathVariable Long id) {
         return ApiResponse.success(batchService.getById(id));
     }
-
-    // Matches Appendix H's "all batches for a drug" feature under a
-    // distinct path — see Assumption 1 in this module's notes for why.
     @GetMapping("/by-drug/{drugId}")
     @PreAuthorize("hasAuthority('BATCH_READ')")
     public ApiResponse<List<BatchResponse>> getByDrug(@PathVariable Long drugId) {

@@ -1,5 +1,6 @@
 package com.pharmacy.pipms.doctor.service;
 
+import com.pharmacy.pipms.common.ApiResponse;
 import com.pharmacy.pipms.common.PageResponse;
 import com.pharmacy.pipms.doctor.dto.*;
 import com.pharmacy.pipms.doctor.entity.DoctorProfile;
@@ -9,12 +10,17 @@ import com.pharmacy.pipms.exception.DuplicateResourceException;
 import com.pharmacy.pipms.exception.UserNotFoundException;
 import com.pharmacy.pipms.user.entity.User;
 import com.pharmacy.pipms.user.repository.UserRepository;
+// import com.pharmacy.pipms.doctor.dto.DoctorProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Service
 @RequiredArgsConstructor
@@ -147,6 +153,14 @@ public class DoctorProfileService {
         return toResponse(doctorProfileRepository.save(profile));
     }
 
+    @Transactional
+    public DoctorProfileResponse setLicenseExpiry(Long id, java.time.LocalDate expiryDate) {
+        DoctorProfile profile = doctorProfileRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotFoundException("Doctor profile not found: " + id));
+        profile.setLicenseExpiryDate(expiryDate);
+        return toResponse(doctorProfileRepository.save(profile));
+    }
+
     private User requireUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -164,7 +178,10 @@ public class DoctorProfileService {
                 p.getQualification(),
                 p.isVerified(),
                 p.isControlledSubstanceAuthorized(),
-                p.isActive()
+                p.isActive(),
+                p.getLicenseExpiryDate()
         );
     }
+    
+    
 }

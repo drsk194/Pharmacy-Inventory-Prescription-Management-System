@@ -4,6 +4,7 @@ import com.pharmacy.pipms.auth.dto.AssignRoleRequest;
 import com.pharmacy.pipms.common.ApiResponse;
 import com.pharmacy.pipms.user.dto.UserProfileResponse;
 import com.pharmacy.pipms.user.service.UserService;
+import com.pharmacy.pipms.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminUserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @PatchMapping("/{id}/status")
     public ApiResponse<UserProfileResponse> setStatus(@PathVariable Long id, @RequestParam boolean active) {
@@ -29,5 +31,19 @@ public class AdminUserController {
     @PatchMapping("/{id}/roles")
     public ApiResponse<UserProfileResponse> assignRoles(@PathVariable Long id,@Valid @RequestBody AssignRoleRequest request) {
         return ApiResponse.success("Roles updated", userService.assignRoles(id, request.getRoleNames()));
+    }
+    @PostMapping
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
+    public ApiResponse<?> createUser(@jakarta.validation.Valid @RequestBody com.pharmacy.pipms.admin.dto.AdminCreateUserRequest request) {
+        return ApiResponse.success("Staff account created", authService.adminCreateUser(request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('USER_MANAGE')")
+    public ApiResponse<com.pharmacy.pipms.common.PageResponse<com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse>> search(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(userService.searchUsers(search, org.springframework.data.domain.PageRequest.of(page, size)));
     }
 }

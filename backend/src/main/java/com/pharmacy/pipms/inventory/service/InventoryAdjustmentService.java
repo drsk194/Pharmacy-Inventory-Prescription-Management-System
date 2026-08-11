@@ -27,10 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventoryAdjustmentService {
 
-    // Appendix F: adjustments exceeding 5% of batch quantity require
-    // supervisor approval.
     private static final BigDecimal APPROVAL_THRESHOLD_PERCENT = BigDecimal.valueOf(5);
-
     private final InventoryAdjustmentRepository adjustmentRepository;
     private final BatchService batchService;
     private final StockMovementService stockMovementService;

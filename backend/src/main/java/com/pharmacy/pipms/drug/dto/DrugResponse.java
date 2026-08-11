@@ -21,4 +21,6 @@ public class DrugResponse {
     private Integer maxStockLevel;
     private String barcode;
     private boolean active;
+    private Integer maxPrescriptionQtyPerFill;
+    private Integer maxRefillsAllowed;
 }

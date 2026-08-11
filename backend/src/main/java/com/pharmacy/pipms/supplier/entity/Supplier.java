@@ -32,19 +32,14 @@ public class Supplier extends BaseEntity {
     @Column(length = 255)
     private String address;
 
-    // Required + unique — Appendix F: only suppliers with a valid drug
-    // distribution license may ever be approved to receive POs.
     @Column(nullable = false, unique = true, length = 50)
     private String drugLicenseNumber;
 
     @Column(length = 100)
     private String creditTerms; // free text, e.g. "Net 30", "COD"
 
-    // 0.0-5.0, manually set for now — see Assumption 3 in the module notes.
     private Double rating;
 
-    // Distinct from `active`: a supplier can exist and be visible without
-    // being cleared to actually receive purchase orders yet.
     @Column(nullable = false)
     private boolean approved = false;
 

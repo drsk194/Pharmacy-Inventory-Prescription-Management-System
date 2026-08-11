@@ -10,6 +10,7 @@ import com.pharmacy.pipms.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.pharmacy.pipms.audit.service.AuditLogService;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final AuditLogService auditLogService;
 
     public UserProfileResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
@@ -33,6 +35,9 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
         user.setActive(active);
         userRepository.save(user);
+        User actor = resolveActor();
+        auditLogService.log(actor, "USER_STATUS_CHANGED", "User", user.getId(), null,
+                "active=" + active, "SUCCESS", null);
         return toResponse(user);
     }
 
@@ -48,7 +53,18 @@ public class UserService {
 
         user.setRoles(newRoles);
         userRepository.save(user);
+        User actor = resolveActor();
+        auditLogService.log(actor, "USER_ROLES_CHANGED", "User", user.getId(),
+                null, "roles=" + roleNames, "SUCCESS", null);        
         return toResponse(user);
+    }
+    @Transactional(readOnly = true)
+    public com.pharmacy.pipms.common.PageResponse<com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse> searchUsers(
+            String search, org.springframework.data.domain.Pageable pageable) {
+        return com.pharmacy.pipms.common.PageResponse.from(userRepository.search(search, pageable).map(u ->
+                new com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse(u.getId(), u.getFullName(), u.getEmail(),
+                        u.getStaffId(), u.getRoles().stream().map(r -> r.getName().name()).collect(java.util.stream.Collectors.toSet()),
+                        u.isActive(), u.isAccountLocked())));
     }
 
     private UserProfileResponse toResponse(User user) {
@@ -65,4 +81,9 @@ public class UserService {
                 user.getLastLogin()
         );
     }
+    private User resolveActor() {
+        String email = com.pharmacy.pipms.audit.util.CurrentActorUtil.getCurrentUserEmail();
+        return email != null ? userRepository.findByEmail(email).orElse(null) : null;
+    }
+    
 }

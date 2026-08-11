@@ -26,7 +26,7 @@ import com.pharmacy.pipms.doctor.service.DoctorProfileService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.pharmacy.pipms.patient.service.PatientService;
-
+import com.pharmacy.pipms.audit.service.AuditLogService;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+
 public class AuthService {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
@@ -47,6 +48,7 @@ public class AuthService {
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final PasswordResetOtpRepository otpRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
@@ -105,15 +107,21 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByLoginIdentifier(request.getIdentifier())
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+        var userOpt = userRepository.findByLoginIdentifier(request.getIdentifier());
+        if (userOpt.isEmpty()) {
+            auditLogService.log(null, "LOGIN_FAILED", "User", null, null,
+                    "No account found for identifier: " + request.getIdentifier(), "FAILURE", "Unknown identifier");
+            throw new BadCredentialsException("Invalid credentials");
+        }
+        User user = userOpt.get();
 
         if (user.isAccountLocked()) {
             if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+                auditLogService.log(user, "LOGIN_BLOCKED", "User", user.getId(), null,
+                        "Account locked until " + user.getLockedUntil(), "FAILURE", "Account locked");
                 throw new AccountLockedException(
                         "Account locked until " + user.getLockedUntil() + " due to repeated failed login attempts");
             } else {
-                // lock window expired — unlock and continue
                 user.setAccountLocked(false);
                 user.setFailedLoginAttempts(0);
             }
@@ -124,10 +132,11 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
         } catch (BadCredentialsException ex) {
             registerFailedAttempt(user);
+            auditLogService.log(user, "LOGIN_FAILED", "User", user.getId(), null,
+                    null, "FAILURE", "Incorrect password");
             throw ex;
         }
 
-        // success — reset failure counter
         user.setFailedLoginAttempts(0);
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -136,17 +145,13 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(principal);
         String refreshTokenValue = issueRefreshToken(user);
 
+        auditLogService.log(user, "LOGIN_SUCCESS", "User", user.getId(), null, null, "SUCCESS", null);
+
         return new AuthResponse(
-                accessToken,
-                refreshTokenValue,
-                "Bearer",
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toSet())
+                accessToken, refreshTokenValue, "Bearer", user.getId(), user.getFullName(), user.getEmail(),
+                user.getRoles().stream().map(r -> r.getName().name()).collect(java.util.stream.Collectors.toSet())
         );
     }
-
     private void registerFailedAttempt(User user) {
         int attempts = user.getFailedLoginAttempts() + 1;
         user.setFailedLoginAttempts(attempts);
@@ -219,6 +224,8 @@ public class AuthService {
                     rt.setRevoked(true);
                     refreshTokenRepository.save(rt);
                 });
+                userRepository.findByEmail(claims.getSubject()).ifPresent(user ->
+                auditLogService.log(user, "LOGOUT", "User", user.getId(), null, null, "SUCCESS", null));
     }
 
     @Transactional
@@ -298,4 +305,46 @@ public class AuthService {
 
     // Small internal DTO just for the register() return value
     public record UserProfileLikeResult(Long userId, String email) {}
+    @Transactional
+    public void setControlledSubstancePin(String email, SetControlledSubstancePinRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        user.setControlledSubstancePinHash(passwordEncoder.encode(request.getNewPin()));
+        userRepository.save(user);
+    }
+    @Transactional
+    public UserProfileLikeResult adminCreateUser(com.pharmacy.pipms.admin.dto.AdminCreateUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email already registered");
+        }
+        if (request.getStaffId() != null && userRepository.existsByStaffId(request.getStaffId())) {
+            throw new DuplicateResourceException("Staff ID already exists");
+        }
+
+        Role role = roleRepository.findByName(request.getRole())
+                .orElseThrow(() -> new IllegalStateException("Role not seeded: " + request.getRole()));
+
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setStaffId(request.getStaffId());
+        user.setPasswordHash(passwordEncoder.encode(request.getTemporaryPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setLicenseNumber(request.getLicenseNumber());
+        user.getRoles().add(role);
+        user.setActive(true);
+        user.setPasswordChangedAt(LocalDateTime.now());
+        user.setPasswordExpiryDate(LocalDateTime.now().plusDays(60));
+
+        User saved = userRepository.save(user);
+        if (request.getRole() == RoleName.ROLE_DOCTOR) {
+            doctorProfileService.createStubProfileForUser(saved, request.getLicenseNumber());
+        }
+        return new UserProfileLikeResult(saved.getId(), saved.getEmail());
+    }
 }
