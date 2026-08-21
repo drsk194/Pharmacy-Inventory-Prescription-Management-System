@@ -1,0 +1,2 @@
+import apiClient from "./client";
+export const systemAdminApi = { getSystemHealth: () => apiClient.get("/api/admin/system-health"), getIntegrationStatus: () => apiClient.get("/api/admin/integration-status"), getBackupStatus: () => apiClient.get("/api/admin/backup-status"), getCompliance: () => apiClient.get("/api/admin/compliance"), runLicenseExpiryCheck: () => apiClient.post("/api/admin/run-license-expiry-check") };

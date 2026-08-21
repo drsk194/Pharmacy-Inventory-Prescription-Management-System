@@ -1,0 +1,4 @@
+import { useEffect, useState } from "react";
+import Modal from "../common/Modal";
+import { auditLogApi } from "../../api/auditLogApi";
+export default function AuditLogDetailModal({ logId, onClose }) { const [log, setLog] = useState(null); const [error, setError] = useState(""); useEffect(() => { auditLogApi.getById(logId).then((response) => setLog(response.data.data)).catch((err) => setError(err.response?.data?.message || "Could not load audit log.")); }, [logId]); return <Modal title={`Audit log #${logId}`} onClose={onClose}>{error && <p className="form-error">{error}</p>}{!log && !error && <p>Loading...</p>}{log && <><p className="form-hint">{log.user} · {log.action} · {log.entityType} #{log.entityId} · {log.result} · {log.timestamp}</p><div className="diff-view"><div><h3>Old value</h3><pre>{JSON.stringify(log.oldValue, null, 2)}</pre></div><div><h3>New value</h3><pre>{JSON.stringify(log.newValue, null, 2)}</pre></div></div></>}</Modal>; }

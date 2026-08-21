@@ -1,0 +1,2 @@
+import apiClient from "./client";
+export const notificationApi = { getUnreadCount: () => apiClient.get("/api/notifications/unread-count"), getMy: (params) => apiClient.get("/api/notifications/my", { params }), markRead: (id) => apiClient.patch(`/api/notifications/${id}/read`), markAllRead: () => apiClient.patch("/api/notifications/read-all"), broadcast: (payload) => apiClient.post("/api/notifications", payload), reportColdChainBreach: (payload) => apiClient.post("/api/notifications/cold-chain-breach", payload) };

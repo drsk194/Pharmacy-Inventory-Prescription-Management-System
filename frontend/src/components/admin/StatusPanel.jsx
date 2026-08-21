@@ -1,0 +1,3 @@
+import StatusBadge from "../common/StatusBadge";
+const TONE = { ACTIVE: "success", CONFIGURED: "success", HEALTHY: "success", MOCK: "warning", DEGRADED: "warning", FAILED: "danger", ERROR: "danger", DOWN: "danger" };
+export default function StatusPanel({ title, entries = [] }) { return <section><h2>{title}</h2><table className="data-table"><thead><tr><th>Item</th><th>Status</th><th>Detail</th></tr></thead><tbody>{entries.map((entry) => <tr key={entry.name}><td>{entry.name}</td><td><StatusBadge label={entry.status} tone={TONE[entry.status] || "neutral"} /></td><td>{entry.detail || "-"}</td></tr>)}{!entries.length && <tr><td colSpan="3">No status data returned.</td></tr>}</tbody></table></section>; }

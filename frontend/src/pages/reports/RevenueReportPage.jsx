@@ -1,0 +1,1 @@
+import ReportView from "../../components/reports/ReportView"; import { reportApi } from "../../api/reportApi"; const COLUMNS = [{ key: "date", label: "Date" }, { key: "revenue", label: "Revenue" }]; export default function RevenueReportPage() { return <ReportView title="Revenue" columns={COLUMNS} fetcher={reportApi.getRevenue} exportFetcher={reportApi.exportRevenue} />; }

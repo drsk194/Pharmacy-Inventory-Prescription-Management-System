@@ -1,0 +1,2 @@
+import apiClient from "./client";
+export const inventoryApi = { createAdjustment: (payload) => apiClient.post("/api/inventory/adjustments", payload), listAdjustments: (params) => apiClient.get("/api/inventory/adjustments", { params }), approveAdjustment: (id) => apiClient.patch(`/api/inventory/adjustments/${id}/approve`), rejectAdjustment: (id, reason) => apiClient.patch(`/api/inventory/adjustments/${id}/reject`, { reason }), submitStockCount: (payload) => apiClient.post("/api/inventory/stock-count", payload) };

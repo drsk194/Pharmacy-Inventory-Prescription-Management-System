@@ -1,0 +1,4 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { prescriptionApi } from "../../api/prescriptionApi";
+export default function MyPrescriptionsPage() { const [rows, setRows] = useState([]); const navigate = useNavigate(); useEffect(() => { prescriptionApi.getMy().then((response) => { const data = response.data.data; setRows(data.content || data); }); }, []); return <main className="list-page"><h1>My prescriptions</h1><table className="data-table"><thead><tr><th>Date</th><th>Doctor</th><th>Status</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} onClick={() => navigate(`/prescriptions/${row.id}`)}><td>{row.createdAt || row.prescribedDate}</td><td>{row.doctorName}</td><td>{row.status}</td></tr>)}{!rows.length && <tr><td colSpan="3">No prescriptions yet.</td></tr>}</tbody></table></main>; }

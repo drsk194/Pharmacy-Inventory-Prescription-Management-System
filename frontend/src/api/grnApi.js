@@ -1,0 +1,2 @@
+import apiClient from "./client";
+export const grnApi = { create: (payload) => apiClient.post("/api/grn", payload), list: (params) => apiClient.get("/api/grn", { params }), getById: (id) => apiClient.get(`/api/grn/${id}`), getDiscrepancies: (params) => apiClient.get("/api/grn/discrepancies", { params }), getSupplierPerformance: (supplierId) => apiClient.get(`/api/grn/supplier-performance/${supplierId}`) };

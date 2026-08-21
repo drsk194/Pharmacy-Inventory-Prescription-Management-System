@@ -1,0 +1,1 @@
+import ReportView from "../../components/reports/ReportView"; import { reportApi } from "../../api/reportApi"; const COLUMNS = [{ key: "patientName", label: "Patient" }, { key: "outstandingAmount", label: "Outstanding" }]; export default function OutstandingReportPage() { return <ReportView title="Outstanding" columns={COLUMNS} fetcher={reportApi.getOutstanding} />; }

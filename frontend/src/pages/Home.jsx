@@ -1,0 +1,2 @@
+import { Link } from "react-router-dom";
+export default function Home() { return <main className="home-page"><section className="home-hero"><h1>PIPMS</h1><p>Pharmacy Inventory and Prescription Management System</p><div className="home-hero__actions"><Link to="/login" className="button button--primary">Staff login</Link><Link to="/login" className="button button--secondary">Patient portal</Link><Link to="/catalog" className="button button--ghost">Browse drug catalog</Link></div></section></main>; }

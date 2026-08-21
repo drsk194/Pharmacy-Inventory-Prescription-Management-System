@@ -1,0 +1,4 @@
+import { useState } from "react";
+import Modal from "../common/Modal";
+import { batchApi } from "../../api/batchApi";
+export default function QuarantineModal({ batch, onClose, onSaved }) { const [reason, setReason] = useState(""); const [error, setError] = useState(""); async function submit(event) { event.preventDefault(); try { await batchApi.quarantine(batch.id, reason); onSaved(); } catch (err) { setError(err.response?.data?.message || "Couldn't quarantine batch."); } } return <Modal title={`Quarantine batch ${batch.batchNumber}`} onClose={onClose}><form className="modal-form" onSubmit={submit}><label>Reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} required /></label>{error && <p className="form-error">{error}</p>}<button type="submit">Quarantine</button></form></Modal>; }

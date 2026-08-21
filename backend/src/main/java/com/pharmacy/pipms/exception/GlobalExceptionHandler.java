@@ -45,8 +45,7 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", req, null);
     }
 
-    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message,
-                                                 HttpServletRequest req, Map<String, String> fieldErrors) {
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest req, Map<String, String> fieldErrors) {
         ErrorResponse body = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())

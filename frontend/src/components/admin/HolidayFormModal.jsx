@@ -1,0 +1,4 @@
+import { useState } from "react";
+import Modal from "../common/Modal";
+import { scheduleApi } from "../../api/scheduleApi";
+export default function HolidayFormModal({ onClose, onSaved }) { const [form, setForm] = useState({ name: "", date: "" }); const [error, setError] = useState(""); async function submit(event) { event.preventDefault(); try { await scheduleApi.createHoliday(form); onSaved(); } catch (err) { setError(err.response?.data?.message || "Could not add holiday."); } } return <Modal title="Add Holiday" onClose={onClose}><form className="modal-form" onSubmit={submit}><label>Name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></label><label>Date<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>{error && <p className="form-error">{error}</p>}<button type="submit">Add holiday</button></form></Modal>; }

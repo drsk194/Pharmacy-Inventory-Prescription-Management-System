@@ -1,0 +1,5 @@
+import { useState } from "react";
+import Modal from "../common/Modal";
+import { controlledSubstanceApi } from "../../api/controlledSubstanceApi";
+import { setCsAuthorized } from "../../context/csAuthStore";
+export default function CsReauthModal({ onClose, onSuccess }) { const [pin, setPin] = useState(""); const [error, setError] = useState(""); async function submit(event) { event.preventDefault(); try { const response = await controlledSubstanceApi.reauthenticate({ pin }); setCsAuthorized(response.data.data.expiresAt); onSuccess(); } catch (err) { setError(err.response?.status === 401 ? "Incorrect PIN." : err.response?.data?.message || "Could not re-authenticate."); } } return <Modal title="Re-authenticate for Controlled Substances" onClose={onClose}><form className="modal-form" onSubmit={submit}><p className="form-hint">This grants a 30-minute CS access window.</p><label>PIN<input type="password" inputMode="numeric" autoFocus value={pin} onChange={(event) => setPin(event.target.value)} required /></label>{error && <p className="form-error">{error}</p>}<button type="submit">Confirm</button></form></Modal>; }

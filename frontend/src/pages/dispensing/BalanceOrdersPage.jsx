@@ -1,0 +1,3 @@
+import { useEffect, useState } from "react";
+import { dispensingApi } from "../../api/dispensingApi";
+export default function BalanceOrdersPage() { const [rows, setRows] = useState([]); useEffect(() => { dispensingApi.getBalanceOrders().then((response) => { const data = response.data.data; setRows(data.content || data); }); }, []); return <main className="list-page"><h1>Balance orders</h1><table className="data-table"><thead><tr><th>Patient</th><th>Drug</th><th>Remaining quantity</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td>{row.patientName}</td><td>{row.drugName}</td><td>{row.remainingQuantity}</td></tr>)}{!rows.length && <tr><td colSpan="3">No pending partial dispenses.</td></tr>}</tbody></table></main>; }

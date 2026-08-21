@@ -1,0 +1,4 @@
+import { useState } from "react";
+import Modal from "../common/Modal";
+import { dispensingApi } from "../../api/dispensingApi";
+export default function ReturnModal({ dispensingId, batchId, onClose, onSaved }) { const [form, setForm] = useState({ quantity: "", reason: "" }); async function submit(event) { event.preventDefault(); await dispensingApi.submitReturn({ dispensingId, batchId, ...form }); onSaved(); } return <Modal title="Return Medication" onClose={onClose}><form className="modal-form" onSubmit={submit}><label>Quantity<input type="number" min="1" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} required /></label><label>Reason<textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} required /></label><button type="submit">Submit return</button></form></Modal>; }

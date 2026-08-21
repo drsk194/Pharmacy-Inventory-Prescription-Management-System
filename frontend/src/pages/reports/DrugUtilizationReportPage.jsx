@@ -1,0 +1,1 @@
+import ReportView from "../../components/reports/ReportView"; import { reportApi } from "../../api/reportApi"; const COLUMNS = [{ key: "drugName", label: "Drug" }, { key: "totalDispensed", label: "Total dispensed" }]; export default function DrugUtilizationReportPage() { return <ReportView title="Drug Utilization" columns={COLUMNS} fetcher={reportApi.getDrugUtilization} />; }

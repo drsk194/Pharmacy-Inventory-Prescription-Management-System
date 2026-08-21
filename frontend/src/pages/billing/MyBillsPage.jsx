@@ -1,0 +1,5 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { billingApi } from "../../api/billingApi";
+import StatusBadge from "../../components/common/StatusBadge";
+export default function MyBillsPage() { const [rows, setRows] = useState([]); const [error, setError] = useState(""); const navigate = useNavigate(); useEffect(() => { billingApi.getMy().then((response) => { const data = response.data.data; setRows(data.content || data); }).catch((err) => setError(err.response?.data?.message || "Could not load bills.")); }, []); return <main className="list-page"><h1>My bills</h1>{error && <p className="form-error">{error}</p>}<table className="data-table"><thead><tr><th>Date</th><th>Total</th><th>Status</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} onClick={() => navigate(`/bills/${row.id}`)}><td>{row.createdAt}</td><td>{row.totalAmount}</td><td><StatusBadge label={row.status} /></td></tr>)}{!rows.length && <tr><td colSpan="3">No bills yet.</td></tr>}</tbody></table></main>; }

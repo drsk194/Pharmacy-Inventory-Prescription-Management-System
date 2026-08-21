@@ -1,0 +1,1 @@
+import ReportView from "../../components/reports/ReportView"; import { reportApi } from "../../api/reportApi"; const COLUMNS = [{ key: "drugName", label: "Drug" }, { key: "turnoverRatio", label: "Turnover ratio" }]; export default function StockTurnoverReportPage() { return <ReportView title="Stock Turnover" columns={COLUMNS} fetcher={reportApi.getStockTurnover} />; }
