@@ -10,7 +10,7 @@ export const handlers = [
     }
     return HttpResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 });
   }),
-  http.get(`${BASE_URL}/api/auth/me`, () => HttpResponse.json({ success: true, data: { id: 1, name: "Admin User", staffId: "ADM0001", roles: ["ROLE_ADMIN"] } })),
+  http.get(`${BASE_URL}/api/auth/me`, () => HttpResponse.json({ success: true, data: { userId: 1, fullName: "Admin User", email: "admin@pipms.test", staffId: "ADM0001", roles: ["ROLE_ADMIN"] } })),
   http.post(`${BASE_URL}/api/auth/refresh`, () => HttpResponse.json({ success: false, message: "No session" }, { status: 401 })),
   http.get(`${BASE_URL}/api/patients`, () => HttpResponse.json({ success: true, data: { content: [{ id: 1, fullName: "Jane Doe", dateOfBirth: "1990-01-01", phone: "1234567890" }], totalPages: 1 } })),
 ];

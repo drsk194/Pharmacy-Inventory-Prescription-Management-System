@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./contextValue";
 import apiClient from "../api/client";
 import { authApi } from "../api/authApi";
-import { setTokens, clearTokens, registerSessionExpiredHandler } from "./authStore";
+import { setTokens, clearTokens, getRefreshToken, registerSessionExpiredHandler } from "./authStore";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try { await authApi.logout(); } catch { /* Local session still needs clearing. */ }
+    try { await authApi.logout(getRefreshToken()); } catch { /* Local session still needs clearing. */ }
     clearSession();
   }, [clearSession]);
 
@@ -36,10 +36,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function restoreSession() {
+      const storedRefreshToken = getRefreshToken();
+      if (!storedRefreshToken) {
+        setIsInitializing(false);
+        return;
+      }
       try {
-        const response = await apiClient.post("/api/auth/refresh");
-        const { accessToken: token, refreshToken } = response.data.data;
-        setTokens(token, refreshToken);
+        const response = await apiClient.post("/api/auth/refresh", { refreshToken: storedRefreshToken });
+        const { accessToken: token, refreshToken: newRefreshToken } = response.data.data;
+        setTokens(token, newRefreshToken);
         setAccessToken(token);
         const meResponse = await authApi.me();
         setUser(meResponse.data.data);

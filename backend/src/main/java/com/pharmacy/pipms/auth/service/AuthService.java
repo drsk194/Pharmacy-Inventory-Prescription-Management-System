@@ -208,24 +208,46 @@ public class AuthService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public MeResponse me(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + email));
+        Set<String> roles = user.getRoles().stream()
+                .map(r -> r.getName().name())
+                .collect(Collectors.toSet());
+        return new MeResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getStaffId(),
+                roles
+        );
+    }
+
     @Transactional
     public void logout(String accessToken, RefreshTokenRequest request) {
-        // Blacklist the current access token until its natural expiry
-        Claims claims = jwtTokenProvider.parseClaims(accessToken);
-        TokenBlacklist blacklist = new TokenBlacklist();
-        blacklist.setJti(claims.getId());
-        blacklist.setExpiresAt(claims.getExpiration().toInstant()
-                .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
-        tokenBlacklistRepository.save(blacklist);
-
-        // Revoke the associated refresh token
-        refreshTokenRepository.findByTokenAndRevokedFalse(request.getRefreshToken())
-                .ifPresent(rt -> {
-                    rt.setRevoked(true);
-                    refreshTokenRepository.save(rt);
-                });
+        if (accessToken != null && !accessToken.isBlank()) {
+            try {
+                Claims claims = jwtTokenProvider.parseClaims(accessToken);
+                TokenBlacklist blacklist = new TokenBlacklist();
+                blacklist.setJti(claims.getId());
+                blacklist.setExpiresAt(claims.getExpiration().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+                tokenBlacklistRepository.save(blacklist);
                 userRepository.findByEmail(claims.getSubject()).ifPresent(user ->
-                auditLogService.log(user, "LOGOUT", "User", user.getId(), null, null, "SUCCESS", null));
+                        auditLogService.log(user, "LOGOUT", "User", user.getId(), null, null, "SUCCESS", null));
+            } catch (Exception ignored) {
+                // Ignore token parsing errors during logout
+            }
+        }
+
+        if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+            refreshTokenRepository.findByTokenAndRevokedFalse(request.getRefreshToken())
+                    .ifPresent(rt -> {
+                        rt.setRevoked(true);
+                        refreshTokenRepository.save(rt);
+                    });
+        }
     }
 
     @Transactional

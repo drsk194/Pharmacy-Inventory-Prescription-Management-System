@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import NavBar from "./components/shell/NavBar";
+import AppShellLayout from "./components/shell/AppShellLayout";
 import Footer from "./components/shell/Footer";
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 import RoleGuard from "./components/routing/RoleGuard";
@@ -77,20 +77,21 @@ import "./App.css";
 import SkipLink from "./components/common/SkipLink";
 
 export default function App() {
-  return <AuthProvider><SkipLink /><NavBar /><div id="main-content"><Routes>
+  return <AuthProvider><SkipLink /><div id="main-content"><Routes>
     <Route path="/" element={<Home />} />
-    <Route path="/notifications" element={<ProtectedRoute />}><Route index element={<NotificationCenterPage />} /></Route>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/not-authorized" element={<NotAuthorizedPage />} />
     <Route path="/catalog" element={<DrugCatalogPage />} />
+    <Route element={<AppShellLayout />}>
     <Route element={<ProtectedRoute />}>
+      <Route path="/notifications" element={<NotificationCenterPage />} />
       <Route path="/dashboard/admin" element={<RoleGuard allow={["ROLE_ADMIN"]}><AdminDashboard /></RoleGuard>} />
       <Route path="/dashboard/pharmacist" element={<RoleGuard allow={["ROLE_PHARMACIST"]}><PharmacistDashboard /></RoleGuard>} />
       <Route path="/dashboard/technician" element={<RoleGuard allow={["ROLE_TECHNICIAN"]}><TechnicianDashboard /></RoleGuard>} />
-      <Route path="/dashboard/procurement" element={<RoleGuard allow={["ROLE_PROCUREMENT"]}><ProcurementDashboard /></RoleGuard>} />
+      <Route path="/dashboard/procurement" element={<RoleGuard allow={["ROLE_PROCUREMENT_OFFICER"]}><ProcurementDashboard /></RoleGuard>} />
       <Route path="/dashboard/auditor" element={<RoleGuard allow={["ROLE_AUDITOR"]}><AuditorDashboard /></RoleGuard>} />
       <Route path="/dashboard/doctor" element={<RoleGuard allow={["ROLE_DOCTOR"]}><DoctorDashboard /></RoleGuard>} />
       <Route path="/dashboard/patient" element={<RoleGuard allow={["ROLE_PATIENT"]}><PatientDashboard /></RoleGuard>} />
@@ -102,21 +103,21 @@ export default function App() {
       <Route path="/doctors/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><DoctorDetailPage /></RoleGuard>} />
       <Route path="/drugs" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><DrugListPage /></RoleGuard>} />
       <Route path="/drugs/interactions" element={<RoleGuard allow={["ROLE_ADMIN"]}><DrugInteractionsPage /></RoleGuard>} />
-      <Route path="/suppliers" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><SupplierListPage /></RoleGuard>} />
-      <Route path="/inventory" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN", "ROLE_PROCUREMENT", "ROLE_AUDITOR"]}><InventoryDashboard /></RoleGuard>} />
-      <Route path="/inventory/batches/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN", "ROLE_PROCUREMENT", "ROLE_AUDITOR"]}><BatchDetailPage /></RoleGuard>} />
+      <Route path="/suppliers" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><SupplierListPage /></RoleGuard>} />
+      <Route path="/inventory" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN", "ROLE_PROCUREMENT_OFFICER", "ROLE_AUDITOR"]}><InventoryDashboard /></RoleGuard>} />
+      <Route path="/inventory/batches/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN", "ROLE_PROCUREMENT_OFFICER", "ROLE_AUDITOR"]}><BatchDetailPage /></RoleGuard>} />
       <Route path="/inventory/locations" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN"]}><LocationsPage /></RoleGuard>} />
       <Route path="/inventory/adjustments/approvals" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><AdjustmentApprovalPage /></RoleGuard>} />
       <Route path="/controlled-substances/register" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><ControlledSubstanceRegisterPage /></RoleGuard>} />
       <Route path="/controlled-substances/discrepancies" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><DiscrepanciesPage /></RoleGuard>} />
-      <Route path="/purchase-orders" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><PurchaseOrderListPage /></RoleGuard>} />
-      <Route path="/purchase-orders/new" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><PurchaseOrderFormPage /></RoleGuard>} />
-      <Route path="/purchase-orders/reorder-suggestions" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><ReorderSuggestionsPage /></RoleGuard>} />
-      <Route path="/purchase-orders/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><PurchaseOrderDetailPage /></RoleGuard>} />
-      <Route path="/grn" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT", "ROLE_PHARMACIST"]}><GrnListPage /></RoleGuard>} />
-      <Route path="/grn/new" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><GrnFormPage /></RoleGuard>} />
-      <Route path="/grn/discrepancies" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT"]}><GrnDiscrepanciesPage /></RoleGuard>} />
-      <Route path="/grn/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT", "ROLE_PHARMACIST"]}><GrnDetailPage /></RoleGuard>} />
+      <Route path="/purchase-orders" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><PurchaseOrderListPage /></RoleGuard>} />
+      <Route path="/purchase-orders/new" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><PurchaseOrderFormPage /></RoleGuard>} />
+      <Route path="/purchase-orders/reorder-suggestions" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><ReorderSuggestionsPage /></RoleGuard>} />
+      <Route path="/purchase-orders/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><PurchaseOrderDetailPage /></RoleGuard>} />
+      <Route path="/grn" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER", "ROLE_PHARMACIST"]}><GrnListPage /></RoleGuard>} />
+      <Route path="/grn/new" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><GrnFormPage /></RoleGuard>} />
+      <Route path="/grn/discrepancies" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER"]}><GrnDiscrepanciesPage /></RoleGuard>} />
+      <Route path="/grn/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PROCUREMENT_OFFICER", "ROLE_PHARMACIST"]}><GrnDetailPage /></RoleGuard>} />
       <Route path="/bills/new" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><BillGenerationPage /></RoleGuard>} />
       <Route path="/bills/outstanding" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST"]}><OutstandingBillsPage /></RoleGuard>} />
       <Route path="/bills/my" element={<RoleGuard allow={["ROLE_PATIENT"]}><MyBillsPage /></RoleGuard>} />
@@ -148,6 +149,7 @@ export default function App() {
       <Route path="/prescriptions/:id" element={<RoleGuard allow={["ROLE_ADMIN", "ROLE_PHARMACIST", "ROLE_TECHNICIAN", "ROLE_DOCTOR", "ROLE_PATIENT"]}><PrescriptionDetailPage /></RoleGuard>} />
       <Route path="/dispensing" element={<RoleGuard allow={["ROLE_PHARMACIST", "ROLE_TECHNICIAN"]}><DispensingWorkbench /></RoleGuard>} />
       <Route path="/dispensing/balance-orders" element={<RoleGuard allow={["ROLE_PHARMACIST", "ROLE_ADMIN"]}><BalanceOrdersPage /></RoleGuard>} />
+    </Route>
     </Route>
   </Routes></div><Footer /></AuthProvider>;
 }

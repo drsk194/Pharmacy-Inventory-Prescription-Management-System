@@ -6,7 +6,7 @@ export const doctorApi = {
   update: (id, payload) => apiClient.put(`/api/doctors/${id}`, payload),
   me: () => apiClient.get("/api/doctors/me"),
   updateMe: (payload) => apiClient.put("/api/doctors/me", payload),
-  verify: (id, verified) => apiClient.patch(`/api/doctors/${id}/verify`, { verified }),
+  verify: (id, verified) => apiClient.patch(`/api/doctors/${id}/verify`, null, { params: { verified } }),
   setCsAuthorization: (id, payload) => apiClient.patch(`/api/doctors/${id}/controlled-substance-authorization`, payload),
-  setLicenseExpiry: (id, licenseExpiryDate) => apiClient.patch(`/api/doctors/${id}/license-expiry`, { licenseExpiryDate }),
+  setLicenseExpiry: (id, expiryDate) => apiClient.patch(`/api/doctors/${id}/license-expiry`, null, { params: { expiryDate } }),
 };

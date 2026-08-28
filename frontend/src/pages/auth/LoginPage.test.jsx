@@ -13,4 +13,16 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: /log in/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/invalid credentials/i));
   });
+
+  it("allows switching between login and register and shows the Google button", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LoginPage />, { route: "/login" });
+
+    expect(screen.getByRole("button", { name: /continue with google/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^register$/i }));
+
+    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+  });
 });

@@ -35,9 +35,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestHeader("Authorization") String authHeader,
-                                     @Valid @RequestBody RefreshTokenRequest request) {
-        String token = authHeader.replace("Bearer ", "");
+    public ApiResponse<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader,
+                                     @RequestBody(required = false) RefreshTokenRequest request) {
+        String token = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.replace("Bearer ", "")
+                : null;
         authService.logout(token, request);
         return ApiResponse.success("Logged out successfully", null);
     }
@@ -49,8 +51,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<String> me(Authentication authentication) {
-        return ApiResponse.success(authentication.getName());
+    public ApiResponse<MeResponse> me(Authentication authentication) {
+        return ApiResponse.success(authService.me(authentication.getName()));
     }
 
     @PutMapping("/change-password")
