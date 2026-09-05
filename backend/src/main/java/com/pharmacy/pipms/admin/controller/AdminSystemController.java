@@ -39,7 +39,7 @@ public class AdminSystemController {
     }
 
     @GetMapping("/compliance")
-    @PreAuthorize("hasAuthority('SYSTEM_CONFIGURE')")
+    @PreAuthorize("hasAuthority('SYSTEM_CONFIGURE') or hasAuthority('AUDIT_LOG_READ')")
     public ApiResponse<ComplianceDashboardResponse> compliance() {
         return ApiResponse.success(adminSystemService.getComplianceDashboard());
     }

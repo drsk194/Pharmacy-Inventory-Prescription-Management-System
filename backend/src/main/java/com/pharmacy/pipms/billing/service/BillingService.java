@@ -111,9 +111,10 @@ public class BillingService {
         bill.setCoPayment(totalAmount);
         bill.setOutstandingAmount(totalAmount);
         bill.setStatus(BillStatus.PENDING);
-        auditLogService.log(null, "BILL_CREATED", "Bill", bill.getId(), null,
-                "total=" + bill.getTotalAmount(), "SUCCESS", null);
-        return toResponse(billRepository.save(bill));
+        Bill saved = billRepository.save(bill);
+        auditLogService.log(null, "BILL_CREATED", "Bill", saved.getId(), null,
+                "total=" + saved.getTotalAmount(), "SUCCESS", null);
+        return toResponse(saved);
     }
 
     private BigDecimal computeWeightedMrp(DispensingRecord record) {
@@ -245,8 +246,27 @@ public class BillingService {
                 throw new AccessDeniedException("You may only view your own bills");
             }
         }
-        auditLogService.log(null, "BILL_CANCELLED", "Bill", bill.getId(), null, null, "SUCCESS", null);
+        auditLogService.log(null, "BILL_VIEWED", "Bill", bill.getId(), null, null, "SUCCESS", null);
         return toResponse(bill);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BillableDispensingResponse> findBillableDispensing(Long patientId) {
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new PatientNotFoundException("Patient not found: " + patientId));
+        return dispensingRecordRepository.findBillableForPatient(
+                        patientId,
+                        java.util.Set.of(
+                                com.pharmacy.pipms.dispensing.entity.DispensingStatus.AUTHORIZED,
+                                com.pharmacy.pipms.dispensing.entity.DispensingStatus.LABEL_PRINTED,
+                                com.pharmacy.pipms.dispensing.entity.DispensingStatus.ACKNOWLEDGED))
+                .stream()
+                .map(record -> new BillableDispensingResponse(
+                        record.getId(),
+                        record.getPrescriptionItem().getDrug().getGenericName(),
+                        record.getQuantityDispensed(),
+                        record.getStatus().name()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -302,13 +322,13 @@ public class BillingService {
                         i.getQuantity(), i.getUnitPrice(), i.getLineTotal()))
                 .collect(Collectors.toList());
         List<PaymentResponse> payments = b.getPayments().stream()
-                .map(p -> new PaymentResponse(p.getId(), p.getAmount(), p.getPaymentMode().name(),
-                        p.getTransactionReference(), p.getReceivedBy().getFullName(), p.getPaymentDate()))
+                .map(p -> new PaymentResponse(p.getId(), p.getAmount(), p.getPaymentMode() != null ? p.getPaymentMode().name() : null,
+                        p.getTransactionReference(), p.getReceivedBy() != null ? p.getReceivedBy().getFullName() : "System", p.getPaymentDate()))
                 .collect(Collectors.toList());
         List<RefundResponse> refunds = b.getRefunds().stream()
                 .map(r -> new RefundResponse(r.getId(), r.getAmount(), r.getReason(),
                         r.getMedicationReturn() != null ? r.getMedicationReturn().getId() : null,
-                        r.getProcessedBy().getFullName(), r.getRefundDate()))
+                        r.getProcessedBy() != null ? r.getProcessedBy().getFullName() : "System", r.getRefundDate()))
                 .collect(Collectors.toList());
 
         return new BillResponse(

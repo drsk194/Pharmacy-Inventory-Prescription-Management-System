@@ -31,4 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "OR LOWER(u.staffId) LIKE LOWER(CONCAT('%', :search, '%')))")
     org.springframework.data.domain.Page<User> search(@org.springframework.data.repository.query.Param("search") String search,
                                                         org.springframework.data.domain.Pageable pageable);
+
+    java.util.List<User> findByShiftId(Long shiftId);
 }

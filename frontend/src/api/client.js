@@ -20,6 +20,11 @@ function resolvePendingQueue(error, token) {
 apiClient.interceptors.response.use((response) => response, async (error) => {
   const originalRequest = error.config;
   const status = error.response?.status;
+  const fieldErrors = error.response?.data?.fieldErrors;
+  if (fieldErrors && Object.keys(fieldErrors).length > 0 && error.response?.data) {
+    const detail = Object.entries(fieldErrors).map(([field, msg]) => `${field}: ${msg}`).join("; ");
+    error.response.data.message = `${error.response.data.message || "Validation failed"} — ${detail}`;
+  }
   const isAuthEndpoint = originalRequest?.url?.includes("/api/auth/login") || originalRequest?.url?.includes("/api/auth/refresh");
   if (status !== 401 || isAuthEndpoint || originalRequest?._retry) return Promise.reject(error);
 

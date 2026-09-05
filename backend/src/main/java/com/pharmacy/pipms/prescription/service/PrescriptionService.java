@@ -6,6 +6,8 @@ import com.pharmacy.pipms.common.constants.RoleName;
 import com.pharmacy.pipms.drug.entity.Drug;
 import com.pharmacy.pipms.drug.repository.DrugRepository;
 import com.pharmacy.pipms.exception.*;
+import com.pharmacy.pipms.doctor.entity.DoctorProfile;
+import com.pharmacy.pipms.doctor.repository.DoctorProfileRepository;
 import com.pharmacy.pipms.notification.service.NotificationService;
 import com.pharmacy.pipms.patient.entity.Patient;
 import com.pharmacy.pipms.patient.repository.PatientRepository;
@@ -37,16 +39,22 @@ public class PrescriptionService {
     private final PrescriptionVerificationService verificationService;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final DoctorProfileRepository doctorProfileRepository;
 
     @Transactional
     public PrescriptionResponse create(PrescriptionCreateRequest request, String submitterEmail) {
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new PatientNotFoundException("Patient not found: " + request.getPatientId()));
-        User doctor = userRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new UserNotFoundException("Doctor not found: " + request.getDoctorId()));
+        User doctor = doctorProfileRepository.findById(request.getDoctorId())
+                .map(DoctorProfile::getUser)
+                .orElseGet(() -> userRepository.findById(request.getDoctorId()).orElse(null));
+        if (doctor == null) {
+            throw new UserNotFoundException("Doctor not found: " + request.getDoctorId());
+        }
 
         boolean doctorHasRole = doctor.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_DOCTOR);
-        if (!doctorHasRole) {
+        boolean doctorHasProfile = doctorProfileRepository.findByUser(doctor).isPresent();
+        if (!doctorHasRole || !doctorHasProfile) {
             throw new IllegalArgumentException("The specified user is not registered as a doctor");
         }
 

@@ -12,6 +12,15 @@ public interface DispensingRecordRepository extends JpaRepository<DispensingReco
 
     @Query("SELECT d FROM DispensingRecord d WHERE (:status IS NULL OR d.status = :status)")
     Page<DispensingRecord> search(@Param("status") DispensingStatus status, Pageable pageable);
+
+    @Query("SELECT d FROM DispensingRecord d " +
+           "WHERE d.prescriptionItem.prescription.patient.id = :patientId " +
+           "AND d.status IN :billableStatuses " +
+           "AND NOT EXISTS (SELECT bi FROM com.pharmacy.pipms.billing.entity.BillItem bi WHERE bi.dispensingRecord = d) " +
+           "ORDER BY d.dispensedAt DESC")
+    java.util.List<DispensingRecord> findBillableForPatient(
+            @Param("patientId") Long patientId,
+            @Param("billableStatuses") java.util.Set<DispensingStatus> billableStatuses);
     // MySQL-specific TIMESTAMPDIFF — the one deliberate exception to
     // database-agnostic JPA in this project. See Module 17's Assumption 5.
     @Query(value = "SELECT AVG(TIMESTAMPDIFF(MINUTE, p.receipt_date, d.dispensed_at)) " +

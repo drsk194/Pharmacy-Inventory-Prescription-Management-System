@@ -300,9 +300,15 @@ public class DispensingService {
         List<BalanceOrder> orders = status != null
                 ? balanceOrderRepository.findByStatus(status)
                 : balanceOrderRepository.findAll();
-        return orders.stream().map(o -> new BalanceOrderResponse(o.getId(), o.getPrescriptionItem().getId(),
-                        o.getPrescriptionItem().getDrug().getGenericName(), o.getQuantityPending(),
-                        o.getStatus().name(), o.getCreatedAt()))
+        return orders.stream().map(o -> new BalanceOrderResponse(
+                        o.getId(),
+                        o.getPrescriptionItem().getId(),
+                        o.getPrescriptionItem().getPrescription().getPatient().getId(),
+                        o.getPrescriptionItem().getPrescription().getPatient().getFullName(),
+                        o.getPrescriptionItem().getDrug().getGenericName(),
+                        o.getQuantityPending(),
+                        o.getStatus().name(),
+                        o.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 

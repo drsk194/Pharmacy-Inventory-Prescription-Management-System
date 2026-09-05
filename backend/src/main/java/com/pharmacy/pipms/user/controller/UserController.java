@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Set;
+import com.pharmacy.pipms.common.constants.RoleName;
 
 @RestController
 @RequestMapping("/api/users")
@@ -24,5 +27,12 @@ public class UserController {
     @GetMapping("/me")
     public ApiResponse<com.pharmacy.pipms.user.dto.UserProfileResponse> me(Authentication authentication) {
         return ApiResponse.success(userService.getProfile(authentication.getName()));
+    }
+
+    @GetMapping("/controlled-substance-staff")
+    @PreAuthorize("hasAuthority('CONTROLLED_SUBSTANCE_READ') or hasAuthority('CONTROLLED_SUBSTANCE_COSIGN') or hasAuthority('CONTROLLED_SUBSTANCE_AUTHORIZE')")
+    public ApiResponse<List<com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse>> controlledSubstanceStaff() {
+        return ApiResponse.success(userService.getActiveStaffByRoles(
+                Set.of(RoleName.ROLE_TECHNICIAN, RoleName.ROLE_ADMIN, RoleName.ROLE_PHARMACIST)));
     }
 }

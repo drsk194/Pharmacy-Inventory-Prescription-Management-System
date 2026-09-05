@@ -75,4 +75,9 @@ public class User extends BaseEntity {
     // Hashed with the same BCryptPasswordEncoder as the login password —
     // set via PUT /api/auth/controlled-substance-pin. Null until set.
     private String controlledSubstancePinHash;
+
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int failedControlledSubstancePinAttempts = 0;
+
+    private LocalDateTime controlledSubstancePinLockedUntil;
 }

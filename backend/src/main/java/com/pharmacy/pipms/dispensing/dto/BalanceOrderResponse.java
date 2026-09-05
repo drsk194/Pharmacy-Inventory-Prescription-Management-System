@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 public class BalanceOrderResponse {
     private Long id;
     private Long prescriptionItemId;
+    private Long patientId;
+    private String patientName;
     private String drugGenericName;
     private BigDecimal quantityPending;
     private String status;

@@ -47,7 +47,7 @@ public class Notification extends BaseEntity {
 
     // Not a real FK — same "reference, not relation" pattern used
     // throughout this project (e.g. DrugBatch.grnId).
-    @Column(length = 30)
+    @Column(length = 100)
     private String referenceType;
 
     private Long referenceId;

@@ -32,6 +32,16 @@ public class ShiftService {
         return toResponse(shiftRepository.save(shift));
     }
 
+    @Transactional
+    public ShiftResponse update(Long id, ShiftCreateRequest request) {
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Shift not found: " + id));
+        shift.setName(request.getName());
+        shift.setStartTime(request.getStartTime());
+        shift.setEndTime(request.getEndTime());
+        return toResponse(shiftRepository.save(shift));
+    }
+
     @Transactional(readOnly = true)
     public List<ShiftResponse> getAll() {
         return shiftRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
@@ -47,7 +57,22 @@ public class ShiftService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public void unassignFromShift(Long userId, Long shiftId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+        if (user.getShift() != null && shiftId.equals(user.getShift().getId())) {
+            user.setShift(null);
+            userRepository.save(user);
+        }
+    }
+
     private ShiftResponse toResponse(Shift s) {
-        return new ShiftResponse(s.getId(), s.getName(), s.getStartTime(), s.getEndTime(), s.isActive());
+        List<User> assignedUsers = userRepository.findByShiftId(s.getId());
+        List<Long> assignedIds = assignedUsers.stream().map(User::getId).collect(Collectors.toList());
+        List<String> assignedNames = assignedUsers.stream()
+                .map(User::getFullName)
+                .collect(Collectors.toList());
+        return new ShiftResponse(s.getId(), s.getName(), s.getStartTime(), s.getEndTime(), s.isActive(), assignedIds, assignedNames);
     }
 }

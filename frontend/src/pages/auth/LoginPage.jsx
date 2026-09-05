@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { authApi } from "../../api/authApi";
 import { useAuth } from "../../hooks/useAuth";
+import PasswordInput from "../../components/common/PasswordInput";
 
 const ROLE_HOME = {
   ROLE_ADMIN: "/dashboard/admin",
@@ -28,7 +29,7 @@ function pickHomeRoute(roles = []) {
 
 export default function LoginPage() {
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [registerForm, setRegisterForm] = useState({
     fullName: "",
@@ -52,8 +53,21 @@ export default function LoginPage() {
     setSuccessMessage("");
     setIsSubmitting(true);
     try {
-      const user = await login(email, password);
-      navigate(location.state?.from?.pathname || pickHomeRoute(user.roles), { replace: true });
+      const user = await login(identifier, password);
+      const fromPath = location.state?.from?.pathname;
+      const allowedPrefixes = {
+        ROLE_ADMIN: ["/dashboard/admin", "/patients", "/doctors", "/drugs", "/inventory", "/controlled-substances", "/purchase-orders", "/grn", "/bills", "/reports", "/admin"],
+        ROLE_PHARMACIST: ["/dashboard/pharmacist", "/patients", "/doctors", "/drugs", "/inventory", "/controlled-substances", "/bills", "/prescriptions", "/dispensing"],
+        ROLE_TECHNICIAN: ["/dashboard/technician", "/patients", "/inventory", "/prescriptions/queue", "/dispensing"],
+        ROLE_PROCUREMENT_OFFICER: ["/dashboard/procurement", "/inventory", "/suppliers", "/purchase-orders", "/grn"],
+        ROLE_AUDITOR: ["/dashboard/auditor", "/inventory", "/reports", "/admin/audit-logs", "/admin/compliance"],
+        ROLE_DOCTOR: ["/dashboard/doctor", "/doctors/me", "/prescriptions"],
+        ROLE_PATIENT: ["/dashboard/patient", "/patients/me", "/prescriptions/my", "/bills/my"],
+      };
+      const canReturn = !!fromPath && user.roles.some((role) =>
+        (allowedPrefixes[role] || []).some((prefix) => fromPath === prefix || fromPath.startsWith(`${prefix}/`)),
+      );
+      navigate(canReturn ? fromPath : pickHomeRoute(user.roles), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Check your credentials and try again.");
     } finally {
@@ -114,21 +128,20 @@ export default function LoginPage() {
 
           {mode === "login" ? (
             <form className="auth-form" onSubmit={submit} noValidate>
-              <label htmlFor="login-email">Email address</label>
+              <label htmlFor="login-identifier">Email or Staff ID</label>
               <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="login-identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
-                autoComplete="email"
-                placeholder="you@example.com"
+                autoComplete="username"
+                placeholder="Email, staff ID, or badge number"
               />
 
               <label htmlFor="login-password">Password</label>
-              <input
+              <PasswordInput
                 id="login-password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -188,7 +201,7 @@ export default function LoginPage() {
                 value={registerForm.email}
                 onChange={handleRegisterChange}
                 required
-                placeholder="you@example.com"
+                placeholder="Email, staff ID, or badge number"
               />
 
               <label htmlFor="reg-phone">Phone number</label>
@@ -223,10 +236,9 @@ export default function LoginPage() {
               </select>
 
               <label htmlFor="reg-password">Password</label>
-              <input
+              <PasswordInput
                 id="reg-password"
                 name="password"
-                type="password"
                 value={registerForm.password}
                 onChange={handleRegisterChange}
                 required

@@ -26,6 +26,11 @@ public class ShiftController {
         return ApiResponse.success("Shift created", shiftService.create(request));
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<ShiftResponse> update(@PathVariable Long id, @Valid @RequestBody ShiftCreateRequest request) {
+        return ApiResponse.success("Shift updated", shiftService.update(id, request));
+    }
+
     @GetMapping
     public ApiResponse<List<ShiftResponse>> getAll() {
         return ApiResponse.success(shiftService.getAll());
@@ -35,5 +40,11 @@ public class ShiftController {
     public ApiResponse<Void> assign(@RequestParam Long userId, @RequestParam Long shiftId) {
         shiftService.assignToUser(userId, shiftId);
         return ApiResponse.success("Shift assigned", null);
+    }
+
+    @PatchMapping("/unassign")
+    public ApiResponse<Void> unassign(@RequestParam Long userId, @RequestParam Long shiftId) {
+        shiftService.unassignFromShift(userId, shiftId);
+        return ApiResponse.success("Shift member removed", null);
     }
 }

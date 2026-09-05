@@ -208,7 +208,7 @@ public class PurchaseOrderService {
                 .map(row -> new PriceComparisonResponse(
                         (Long) row[0],
                         (String) row[1],
-                        ((Number) row[2]).equals(0) ? BigDecimal.ZERO : new BigDecimal(row[2].toString()),
+                        (row[2] == null || ((Number) row[2]).doubleValue() == 0) ? BigDecimal.ZERO : new BigDecimal(row[2].toString()),
                         (LocalDateTime) row[3]))
                 .collect(Collectors.toList());
     }

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- network data is loaded asynchronously after mount. */
 import { useCallback, useEffect, useState } from "react";
 import { systemAdminApi } from "../../api/systemAdminApi"; import { drugApi } from "../../api/drugApi"; import { reportApi } from "../../api/reportApi"; import { purchaseOrderApi } from "../../api/purchaseOrderApi"; import { useAuth } from "../../hooks/useAuth";
 import StatCard from "../../components/dashboard/StatCard"; import TrendAreaChart from "../../components/dashboard/TrendAreaChart"; import DonutChart from "../../components/dashboard/DonutChart"; import BarChartCard from "../../components/dashboard/BarChartCard";

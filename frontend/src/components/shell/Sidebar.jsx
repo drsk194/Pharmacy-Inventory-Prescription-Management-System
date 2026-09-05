@@ -16,7 +16,7 @@ export default function Sidebar({ isOpen, onNavigate }) {
   const { user } = useAuth();
   const location = useLocation();
   return <aside className={isOpen ? "sidebar sidebar--open" : "sidebar"}>
-    <Link to="/" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__brand-mark" aria-hidden="true">Rx</span><span className="sidebar__brand-text">PIPMS</span></Link>
+    <Link to="/" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__brand-mark" aria-hidden="true">P</span><span className="sidebar__brand-text">PIPMS</span></Link>
     <nav className="sidebar__nav" aria-label="Main navigation">
       {buildGroupsForRoles(user?.roles).map((group) => <div className="sidebar__group" key={group.label}><span className="sidebar__group-label">{group.label}</span>
         {group.items.map((item) => { const active = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`); return <Link key={item.to} to={item.to} onClick={onNavigate} className={active ? "sidebar__link sidebar__link--active" : "sidebar__link"} aria-current={active ? "page" : undefined}><span className="sidebar__link-dot" aria-hidden="true" />{item.label}</Link>; })}

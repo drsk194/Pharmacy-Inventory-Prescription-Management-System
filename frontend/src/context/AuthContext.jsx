@@ -4,6 +4,8 @@ import apiClient from "../api/client";
 import { authApi } from "../api/authApi";
 import { setTokens, clearTokens, getRefreshToken, registerSessionExpiredHandler } from "./authStore";
 
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -60,6 +62,28 @@ export function AuthProvider({ children }) {
       window.location.href = "/login";
     });
   }, [clearSession]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    let timer;
+    const resetIdleTimer = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        clearSession();
+        window.location.href = "/login";
+      }, IDLE_TIMEOUT_MS);
+    };
+
+    const activityEvents = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
+    activityEvents.forEach((eventName) => window.addEventListener(eventName, resetIdleTimer, { passive: true }));
+    resetIdleTimer();
+
+    return () => {
+      window.clearTimeout(timer);
+      activityEvents.forEach((eventName) => window.removeEventListener(eventName, resetIdleTimer));
+    };
+  }, [user, clearSession]);
 
   return <AuthContext.Provider value={{ user, accessToken, isAuthenticated: Boolean(user), isInitializing, login, logout, logoutAll }}>{children}</AuthContext.Provider>;
 }

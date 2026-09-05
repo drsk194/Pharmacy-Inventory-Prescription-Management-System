@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -13,4 +14,6 @@ public class ShiftResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private boolean active;
+    private List<Long> assignedUserIds;
+    private List<String> assignedUserNames;
 }
