@@ -1,6 +1,30 @@
+# Backend
 backend/target/
+*.class
+
+# Frontend
 frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log
 backend-restart.log
 backend-restart-error.log
+
+# OS
 .DS_Store
-*.class
+Thumbs.db
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Kiro
+.kiro/
+
+.vscode/
