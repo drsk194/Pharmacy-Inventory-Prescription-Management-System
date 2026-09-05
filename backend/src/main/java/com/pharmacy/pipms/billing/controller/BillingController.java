@@ -28,6 +28,13 @@ public class BillingController {
         return ApiResponse.success("Bill generated", billingService.createBill(request));
     }
 
+    @GetMapping("/billable-dispensing")
+    @PreAuthorize("hasAuthority('BILLING_CREATE')")
+    public ApiResponse<java.util.List<BillableDispensingResponse>> billableDispensing(
+            @RequestParam Long patientId) {
+        return ApiResponse.success(billingService.findBillableDispensing(patientId));
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('BILLING_READ_ALL')")
     public ApiResponse<PageResponse<BillResponse>> search(

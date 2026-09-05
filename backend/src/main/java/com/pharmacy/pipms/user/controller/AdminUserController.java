@@ -5,6 +5,7 @@ import com.pharmacy.pipms.common.ApiResponse;
 import com.pharmacy.pipms.user.dto.UserProfileResponse;
 import com.pharmacy.pipms.user.service.UserService;
 import com.pharmacy.pipms.auth.service.AuthService;
+import com.pharmacy.pipms.admin.dto.AdminSetControlledSubstancePinRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,13 @@ public class AdminUserController {
     @PatchMapping("/{id}/roles")
     public ApiResponse<UserProfileResponse> assignRoles(@PathVariable Long id,@Valid @RequestBody AssignRoleRequest request) {
         return ApiResponse.success("Roles updated", userService.assignRoles(id, request.getRoleNames()));
+    }
+
+    @PutMapping("/{id}/controlled-substance-pin")
+    public ApiResponse<UserProfileResponse> setControlledSubstancePin(
+            @PathVariable Long id, @Valid @RequestBody AdminSetControlledSubstancePinRequest request) {
+        return ApiResponse.success("Controlled-substance PIN provisioned",
+                userService.setControlledSubstancePin(id, request.getNewPin()));
     }
     @PostMapping
     @PreAuthorize("hasAuthority('USER_MANAGE')")

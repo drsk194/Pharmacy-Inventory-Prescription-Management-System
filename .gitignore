@@ -1,0 +1,6 @@
+backend/target/
+frontend/node_modules/
+backend-restart.log
+backend-restart-error.log
+.DS_Store
+*.class

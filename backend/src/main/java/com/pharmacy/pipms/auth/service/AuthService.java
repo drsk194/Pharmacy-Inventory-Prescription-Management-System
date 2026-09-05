@@ -283,8 +283,12 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("No account found for this email"));
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null) {
+            // Keep account existence confidential: the public API returns the same
+            // success response whether or not the address is registered.
+            return;
+        }
 
         String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
 
@@ -337,6 +341,8 @@ public class AuthService {
         }
 
         user.setControlledSubstancePinHash(passwordEncoder.encode(request.getNewPin()));
+        user.setFailedControlledSubstancePinAttempts(0);
+        user.setControlledSubstancePinLockedUntil(null);
         userRepository.save(user);
     }
     @Transactional

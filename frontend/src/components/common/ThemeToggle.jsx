@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const STORAGE_KEY = "pipms-theme";
 
 export default function ThemeToggle() {
-  const [isLight, setIsLight] = useState(() => localStorage.getItem(STORAGE_KEY) === "light");
+  const [isLight, setIsLight] = useState(() => localStorage.getItem(STORAGE_KEY) !== "dark");
 
   useEffect(() => {
     document.documentElement.dataset.theme = isLight ? "light" : "dark";

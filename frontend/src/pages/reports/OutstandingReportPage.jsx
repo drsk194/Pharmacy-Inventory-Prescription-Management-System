@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- network data is loaded asynchronously after mount. */
 import { useCallback, useEffect, useState } from "react";
 import BackButton from "../../components/common/BackButton";
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from "recharts";

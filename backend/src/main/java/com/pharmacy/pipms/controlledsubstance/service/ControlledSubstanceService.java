@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -138,7 +139,7 @@ public class ControlledSubstanceService {
         entry.setTechnician(technician);
         entry.setPharmacist(pharmacist);
         entry.setWitness(witness);
-        entry.setTransactionDate(LocalDateTime.now());
+        entry.setTransactionDate(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
         entry.setNotes(request.getNotes());
 
         String previousHash = registerRepository.findTopByOrderByIdDesc()
@@ -381,14 +382,38 @@ public class ControlledSubstanceService {
         }
     }
 
+    private static final int MAX_PIN_ATTEMPTS = 5;
+    private static final int PIN_LOCK_MINUTES = 15;
+
     private void verifyPin(User user, String rawPin, String roleLabel) {
         if (user.getControlledSubstancePinHash() == null) {
             throw new ControlledSubstanceAuthException(
                     "The " + roleLabel + " has not set a controlled-substance PIN yet");
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (user.getControlledSubstancePinLockedUntil() != null) {
+            if (user.getControlledSubstancePinLockedUntil().isAfter(now)) {
+                throw new ControlledSubstanceAuthException(
+                        "The " + roleLabel + " controlled-substance PIN is temporarily locked. Try again later.");
+            }
+            user.setControlledSubstancePinLockedUntil(null);
+            user.setFailedControlledSubstancePinAttempts(0);
+        }
+
         if (!passwordEncoder.matches(rawPin, user.getControlledSubstancePinHash())) {
+            int attempts = user.getFailedControlledSubstancePinAttempts() + 1;
+            user.setFailedControlledSubstancePinAttempts(attempts);
+            if (attempts >= MAX_PIN_ATTEMPTS) {
+                user.setControlledSubstancePinLockedUntil(now.plusMinutes(PIN_LOCK_MINUTES));
+            }
+            userRepository.save(user);
             throw new ControlledSubstanceAuthException("Invalid " + roleLabel + " PIN");
         }
+
+        user.setFailedControlledSubstancePinAttempts(0);
+        user.setControlledSubstancePinLockedUntil(null);
+        userRepository.save(user);
     }
 
     private String computeHash(String previousHash, ControlledSubstanceRegister entry) {

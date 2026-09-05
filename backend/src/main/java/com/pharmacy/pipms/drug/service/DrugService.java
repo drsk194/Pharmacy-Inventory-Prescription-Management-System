@@ -37,11 +37,16 @@ public class DrugService {
                 request.getDrugClass(), request.getSchedule(), request.getStorageCondition(),
                 request.getUnitOfMeasure(), request.getReorderLevel(), request.getMinStockLevel(),
                 request.getMaxStockLevel(), request.getBarcode(),
-            request.getMaxPrescriptionQtyPerFill(), request.getMaxRefillsAllowed());
+                request.getMaxPrescriptionQtyPerFill(), request.getMaxRefillsAllowed());
         drug.setActive(true);
-        auditLogService.log(currentActor(), "DRUG_CREATED", "Drug", drug.getId(),
-                null, drug.getGenericName(), "SUCCESS", null);
-        return toResponse(drugRepository.save(drug));
+
+        // Persist first so the generated drug ID is available to the audit record.
+        // This also avoids inserting an audit row with a null entityId into an
+        // existing database schema that may still enforce that column as NOT NULL.
+        Drug savedDrug = drugRepository.saveAndFlush(drug);
+        auditLogService.log(currentActor(), "DRUG_CREATED", "Drug", savedDrug.getId(),
+                null, savedDrug.getGenericName(), "SUCCESS", null);
+        return toResponse(savedDrug);
     }
 
     @Transactional

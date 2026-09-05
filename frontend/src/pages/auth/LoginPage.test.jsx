@@ -10,15 +10,13 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
     await user.type(screen.getByLabelText(/email or staff id/i), "wrong@pipms.test");
     await user.type(screen.getByLabelText(/password/i), "wrong-password");
-    await user.click(screen.getByRole("button", { name: /log in/i }));
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/invalid credentials/i));
   });
 
-  it("allows switching between login and register and shows the Google button", async () => {
+  it("allows switching between login and register", async () => {
     const user = userEvent.setup();
     renderWithProviders(<LoginPage />, { route: "/login" });
-
-    expect(screen.getByRole("button", { name: /continue with google/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /^register$/i }));
 

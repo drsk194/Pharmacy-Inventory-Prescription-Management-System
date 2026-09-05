@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../../api/authApi";
+import PasswordInput from "../../components/common/PasswordInput";
 export default function RegisterPage() {
   const [form, setForm] = useState({ fullName: "", email: "", phoneNumber: "", password: "", dateOfBirth: "", gender: "" });
   const [error, setError] = useState("");
@@ -33,14 +34,18 @@ export default function RegisterPage() {
         ].map(([name, label, type]) => (
           <label key={name}>
             {label}
-            <input
-              name={name}
-              type={type}
-              value={form[name]}
-              onChange={change}
-              required
-              {...(name === "phoneNumber" ? { pattern: "\\d{10}", title: "Phone number must be exactly 10 digits" } : {})}
-            />
+            {type === "password" ? (
+              <PasswordInput name={name} value={form[name]} onChange={change} required />
+            ) : (
+              <input
+                name={name}
+                type={type}
+                value={form[name]}
+                onChange={change}
+                required
+                {...(name === "phoneNumber" ? { pattern: "\\d{10}", title: "Phone number must be exactly 10 digits" } : {})}
+              />
+            )}
           </label>
         ))}
         <label>

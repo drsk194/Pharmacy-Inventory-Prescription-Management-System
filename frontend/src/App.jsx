@@ -75,6 +75,7 @@ import SystemHealthPage from "./pages/admin/SystemHealthPage";
 import CompliancePage from "./pages/admin/CompliancePage";
 import "./App.css";
 import SkipLink from "./components/common/SkipLink";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 export default function App() {
   return <AuthProvider><SkipLink /><div id="main-content"><Routes>
@@ -85,7 +86,7 @@ export default function App() {
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/not-authorized" element={<NotAuthorizedPage />} />
     <Route path="/catalog" element={<DrugCatalogPage />} />
-    <Route element={<AppShellLayout />}>
+    <Route element={<ErrorBoundary><AppShellLayout /></ErrorBoundary>}>
     <Route element={<ProtectedRoute />}>
       <Route path="/notifications" element={<NotificationCenterPage />} />
       <Route path="/dashboard/admin" element={<RoleGuard allow={["ROLE_ADMIN"]}><AdminDashboard /></RoleGuard>} />

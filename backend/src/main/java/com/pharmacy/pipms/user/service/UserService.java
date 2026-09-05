@@ -7,6 +7,7 @@ import com.pharmacy.pipms.user.entity.Role;
 import com.pharmacy.pipms.user.entity.User;
 import com.pharmacy.pipms.user.repository.RoleRepository;
 import com.pharmacy.pipms.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final AuditLogService auditLogService;
+        private final PasswordEncoder passwordEncoder;
 
     public UserProfileResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
@@ -58,6 +60,20 @@ public class UserService {
                 null, "roles=" + roleNames, "SUCCESS", null);        
         return toResponse(user);
     }
+
+        @Transactional
+        public UserProfileResponse setControlledSubstancePin(Long userId, String newPin) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+                user.setControlledSubstancePinHash(passwordEncoder.encode(newPin));
+                user.setFailedControlledSubstancePinAttempts(0);
+                user.setControlledSubstancePinLockedUntil(null);
+                userRepository.save(user);
+                User actor = resolveActor();
+                auditLogService.log(actor, "CONTROLLED_SUBSTANCE_PIN_PROVISIONED", "User", user.getId(),
+                                null, "Controlled-substance PIN provisioned", "SUCCESS", null);
+                return toResponse(user);
+        }
     @Transactional(readOnly = true)
     public com.pharmacy.pipms.common.PageResponse<com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse> searchUsers(
             String search, org.springframework.data.domain.Pageable pageable) {
@@ -65,6 +81,16 @@ public class UserService {
                 new com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse(u.getId(), u.getFullName(), u.getEmail(),
                         u.getStaffId(), u.getRoles().stream().map(r -> r.getName().name()).collect(java.util.stream.Collectors.toSet()),
                         u.isActive(), u.isAccountLocked())));
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse> getActiveStaffByRoles(java.util.Set<RoleName> roles) {
+        return userRepository.findActiveByRoleIn(roles).stream().map(u ->
+                new com.pharmacy.pipms.admin.dto.AdminUserSummaryResponse(
+                        u.getId(), u.getFullName(), u.getEmail(), u.getStaffId(),
+                        u.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toSet()),
+                        u.isActive(), u.isAccountLocked()))
+                .toList();
     }
 
     private UserProfileResponse toResponse(User user) {

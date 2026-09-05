@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../../api/authApi";
+import PasswordInput from "../../components/common/PasswordInput";
 export default function ResetPasswordPage() {
   const [form, setForm] = useState({ email: "", otpCode: "", newPassword: "" });
   const [error, setError] = useState("");
@@ -48,9 +49,8 @@ export default function ResetPasswordPage() {
         </label>
         <label>
           New password
-          <input
+          <PasswordInput
             name="newPassword"
-            type="password"
             value={form.newPassword}
             onChange={change}
             required

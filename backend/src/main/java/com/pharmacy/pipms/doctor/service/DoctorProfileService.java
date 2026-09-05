@@ -1,6 +1,7 @@
 package com.pharmacy.pipms.doctor.service;
 
 import com.pharmacy.pipms.common.ApiResponse;
+import com.pharmacy.pipms.common.constants.RoleName;
 import com.pharmacy.pipms.common.PageResponse;
 import com.pharmacy.pipms.doctor.dto.*;
 import com.pharmacy.pipms.doctor.entity.DoctorProfile;
@@ -33,6 +34,11 @@ public class DoctorProfileService {
     public DoctorProfileResponse createProfile(DoctorCreateRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + request.getUserId()));
+
+        boolean isDoctor = user.getRoles().stream().anyMatch(role -> role.getName() == RoleName.ROLE_DOCTOR);
+        if (!isDoctor) {
+            throw new IllegalArgumentException("Doctor profiles can only be created for users with the ROLE_DOCTOR role");
+        }
 
         if (doctorProfileRepository.findByUser(user).isPresent()) {
             throw new DuplicateResourceException("This user already has a doctor profile");

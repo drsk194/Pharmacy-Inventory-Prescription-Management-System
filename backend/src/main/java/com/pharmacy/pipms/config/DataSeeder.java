@@ -72,19 +72,23 @@ public class DataSeeder implements CommandLineRunner {
      */
     private void assignPermissionsToRoles(Map<RoleName, Role> roles, Map<PermissionName, Permission> perms) {
 
+        // Rebuild memberships instead of only adding permissions. This removes
+        // stale privileges from databases created by earlier seeder versions.
+        roles.values().forEach(role -> role.getPermissions().clear());
+
         // ADMIN: everything
         assign(roles.get(RoleName.ROLE_ADMIN), perms, PermissionName.values());
 
         // PHARMACIST: dispensing authority, prescription verification, controlled substances
-        // PHARMACIST: add PATIENT_READ_ALL, PATIENT_MANAGE
         assign(roles.get(RoleName.ROLE_PHARMACIST), perms,
                 DRUG_READ, BATCH_READ, BATCH_CREATE,
                 PRESCRIPTION_READ_ALL, PRESCRIPTION_PROCESS, PRESCRIPTION_VERIFY, PRESCRIPTION_REJECT,
                 DISPENSING_PREPARE, DISPENSING_AUTHORIZE,
                 CONTROLLED_SUBSTANCE_READ, CONTROLLED_SUBSTANCE_AUTHORIZE,
+                SUPPLIER_READ,
                 PURCHASE_ORDER_CREATE,
                 REPORT_INVENTORY, REPORT_DISPENSING,
-                PATIENT_READ_ALL, PATIENT_MANAGE,
+                PATIENT_READ_ALL,
                 DOCTOR_READ_ALL,
                 INVENTORY_COUNT, INVENTORY_ADJUST,
                 BILLING_CREATE, BILLING_READ_ALL, PAYMENT_PROCESS, REFUND_PROCESS);
@@ -97,15 +101,15 @@ public class DataSeeder implements CommandLineRunner {
                 REPORT_PROCUREMENT,
                 INVENTORY_COUNT, INVENTORY_ADJUST);
 
-        // TECHNICIAN: add PATIENT_READ_ALL, PATIENT_MANAGE
         assign(roles.get(RoleName.ROLE_TECHNICIAN), perms,
                 DRUG_READ, BATCH_READ,
-                PRESCRIPTION_PROCESS, DISPENSING_PREPARE,
+                PRESCRIPTION_PROCESS, PRESCRIPTION_READ_ALL, DISPENSING_PREPARE,
                 INVENTORY_COUNT, INVENTORY_ADJUST,
                 BILLING_CREATE, BILLING_READ_ALL, PAYMENT_PROCESS,
+            CONTROLLED_SUBSTANCE_READ,
                 CONTROLLED_SUBSTANCE_COSIGN,
                 REPORT_DISPENSING,
-                PATIENT_READ_ALL, PATIENT_MANAGE);
+                PATIENT_READ_ALL);
 
         // AUDITOR: read-only across the board
         assign(roles.get(RoleName.ROLE_AUDITOR), perms,
@@ -116,11 +120,11 @@ public class DataSeeder implements CommandLineRunner {
                 REPORT_INVENTORY, REPORT_DISPENSING, REPORT_PROCUREMENT, REPORT_FINANCIAL,
                 AUDIT_LOG_READ);
 
-        // DOCTOR: full patient management, so a doctor can verify identity
-        // and correct/update patient records during a consultation.
+        // DOCTOR: prescribing/read access only; patient writes stay with
+        // dedicated patient-management roles.
         assign(roles.get(RoleName.ROLE_DOCTOR), perms,
                 DRUG_READ, PRESCRIPTION_CREATE, PRESCRIPTION_READ_OWN,
-                PATIENT_READ_ALL, PATIENT_MANAGE,
+                PATIENT_READ_ALL,
                 DOCTOR_READ_OWN);
 
         // PATIENT: add PATIENT_READ_OWN
@@ -137,7 +141,7 @@ public class DataSeeder implements CommandLineRunner {
     private void seedDefaultSystemConfig() {
         seedConfigIfAbsent("DISPENSING_TERMINAL_IDLE_TIMEOUT_MINUTES", "10",
                 com.pharmacy.pipms.systemconfig.entity.ConfigDataType.NUMBER, "SECURITY",
-                "FR2 requirement — documented value only; not actively enforced due to stateless JWT architecture (see Module 19 notes)");
+                "FR2 requirement — enforced client-side by the authenticated-session idle timer");
         seedConfigIfAbsent("PHYSICAL_STOCK_COUNT_FREQUENCY_DAYS", "30",
                 com.pharmacy.pipms.systemconfig.entity.ConfigDataType.NUMBER, "INVENTORY",
                 "Appendix F: physical stock count must be performed monthly");
